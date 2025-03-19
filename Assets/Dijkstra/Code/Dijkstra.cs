@@ -47,6 +47,8 @@ namespace MrSanmi.DijkstraAlgorithm
 
         public void GenerateNodes()
         {
+            DeleteNodes();
+            
             Vector3 tempPos = _parameters.startPosition.position;
             float xOffset = _parameters.nodesMatrixSize.x / _parameters.numberOfNodes.x;
             float yOffset = _parameters.nodesMatrixSize.y / _parameters.numberOfNodes.y;
@@ -72,7 +74,6 @@ namespace MrSanmi.DijkstraAlgorithm
 
                     if (hitColliders.Length > 0)
                     {
-                        Debug.Log("AAAAAAAAAAAAAA");
                         foreach(Collider collider in hitColliders)
                         {
                             if (collider.gameObject.layer == 6)
@@ -84,6 +85,8 @@ namespace MrSanmi.DijkstraAlgorithm
                         }
                     }
 
+                    nodeInstance.transform.SetParent(this.gameObject.transform);
+                    
                     tempPos += new Vector3(0.0f, 0.0f, xOffset);
                 }
 
