@@ -4,8 +4,8 @@ namespace MrSanmi.DijkstraAlgorithm
 {
     public enum NodeStates
     {
-        CONNECTABLE,
-        NOT_CONNECTABLE
+        HABILITADO,
+        DESHABILITADO
     }
     public class Node : MonoBehaviour
     {

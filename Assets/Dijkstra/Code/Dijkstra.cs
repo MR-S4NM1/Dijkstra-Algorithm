@@ -70,7 +70,7 @@ namespace MrSanmi.DijkstraAlgorithm
                     Collider[] hitColliders = Physics.OverlapSphere(actualNode.transform.position, 0.5f);
 
                     IconManager.SetIcon(nodeInstance, IconManager.LabelIcon.Green);
-                    actualNode._nodeState = NodeStates.CONNECTABLE;
+                    actualNode._nodeState = NodeStates.HABILITADO;
 
                     if (hitColliders.Length > 0)
                     {
@@ -79,7 +79,7 @@ namespace MrSanmi.DijkstraAlgorithm
                             if (collider.gameObject.layer == 6)
                             {
                                 IconManager.SetIcon(nodeInstance, IconManager.LabelIcon.Red);
-                                actualNode._nodeState = NodeStates.NOT_CONNECTABLE;
+                                actualNode._nodeState = NodeStates.DESHABILITADO;
                                 break;
                             }
                         }
