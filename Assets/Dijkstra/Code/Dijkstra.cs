@@ -28,6 +28,8 @@ namespace MrSanmi.DijkstraAlgorithm
 
         [SerializeField] public GameObject nodeInstance;
         Node actualNode;
+        float xOffset;
+        float yOffset;
 
         void Start()
         {
@@ -50,12 +52,12 @@ namespace MrSanmi.DijkstraAlgorithm
             DeleteNodes();
             
             Vector3 tempPos = _parameters.startPosition.position;
-            float xOffset = _parameters.nodesMatrixSize.x / _parameters.numberOfNodes.x;
-            float yOffset = _parameters.nodesMatrixSize.y / _parameters.numberOfNodes.y;
+            xOffset = (float)_parameters.nodesMatrixSize.x / ((float)_parameters.numberOfNodes.x - 1.0f);
+            yOffset = (float)_parameters.nodesMatrixSize.y / ((float)_parameters.numberOfNodes.y - 1.0f);
 
-            for(int i = 0; i < _parameters.numberOfNodes.y; ++i)
+            for(float i = 0; i < _parameters.numberOfNodes.y; ++i)
             {
-                for(int j = 0; j < _parameters.numberOfNodes.x; ++j)
+                for(float j = 0; j < _parameters.numberOfNodes.x; ++j)
                 {
                     nodeInstance = Instantiate(_parameters.nodePrefab);
                     actualNode = nodeInstance.GetComponent<Node>();
@@ -85,7 +87,7 @@ namespace MrSanmi.DijkstraAlgorithm
                         }
                     }
 
-                    nodeInstance.transform.SetParent(this.gameObject.transform);
+                    nodeInstance.transform.SetParent(this.gameObject.transform, true);
                     
                     tempPos += new Vector3(0.0f, 0.0f, xOffset);
                 }
@@ -103,8 +105,6 @@ namespace MrSanmi.DijkstraAlgorithm
             }
             _parameters.nodes.Clear();
         }
-
-
         #endregion
     }
 }
