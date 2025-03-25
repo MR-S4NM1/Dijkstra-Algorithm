@@ -1,3 +1,4 @@
+using NUnit.Framework.Interfaces;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -24,12 +25,16 @@ namespace MrSanmi.DijkstraAlgorithm
 
     public class Dijkstra : MonoBehaviour
     {
+        #region References
         [SerializeField] protected DijkstraParameters _parameters;
-
         [SerializeField] public GameObject nodeInstance;
+        #endregion
+
+        #region RuntimeVariables
         Node actualNode;
         float xOffset;
         float yOffset;
+        #endregion
 
         void Start()
         {
@@ -50,7 +55,7 @@ namespace MrSanmi.DijkstraAlgorithm
         public void GenerateNodes()
         {
             DeleteNodes();
-            
+
             Vector3 tempPos = _parameters.startPosition.position;
             xOffset = (float)_parameters.nodesMatrixSize.x / ((float)_parameters.numberOfNodes.x - 1.0f);
             yOffset = (float)_parameters.nodesMatrixSize.y / ((float)_parameters.numberOfNodes.y - 1.0f);
@@ -95,6 +100,8 @@ namespace MrSanmi.DijkstraAlgorithm
                 tempPos.z = _parameters.startNode.transform.position.z;
                 tempPos += new Vector3(yOffset, 0.0f, 0.0f);
             }
+
+            _parameters.nodes.Add(_parameters.endNode);
         }
 
         public void DeleteNodes()
