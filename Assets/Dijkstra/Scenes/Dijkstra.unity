@@ -582,7 +582,7 @@ GameObject:
   - component: {fileID: 1140493676}
   m_Layer: 0
   m_Name: EndPosition
-  m_TagString: Untagged
+  m_TagString: FinalNode
   m_Icon: {fileID: -1412012063857583412, guid: 0000000000000000d000000000000000, type: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0

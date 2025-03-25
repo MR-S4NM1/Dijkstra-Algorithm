@@ -108,7 +108,10 @@ namespace MrSanmi.DijkstraAlgorithm
         {
             foreach (Node node in _parameters.nodes)
             {
-                DestroyImmediate(node.gameObject);
+                if (!node.gameObject.CompareTag("FinalNode"))
+                {
+                    DestroyImmediate(node.gameObject);
+                }
             }
             _parameters.nodes.Clear();
         }
