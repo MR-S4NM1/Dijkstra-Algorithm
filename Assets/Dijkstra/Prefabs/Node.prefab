@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2400863454291481718}
   - component: {fileID: 9043864811831789203}
+  - component: {fileID: 7764505077207966316}
   m_Layer: 0
   m_Name: Node
   m_TagString: Untagged
@@ -44,4 +45,26 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c5c5f2161e3ce6e468066ad5f5e0b9d9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _nodeState: 0
+  nodeState: 0
+  connections: []
+--- !u!135 &7764505077207966316
+SphereCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1653126704218320645}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Radius: 0.5
+  m_Center: {x: 0, y: 0, z: 0}

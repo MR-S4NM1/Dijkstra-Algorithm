@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace MrSanmi.DijkstraAlgorithm
@@ -9,16 +10,11 @@ namespace MrSanmi.DijkstraAlgorithm
     }
     public class Node : MonoBehaviour
     {
-        [SerializeField] public NodeStates _nodeState;
+        #region InternalData
 
-        void Start()
-        {
+        [SerializeField] public NodeStates nodeState;
+        [SerializeField] protected List<Connection> connections;
 
-        }
-
-        void Update()
-        {
-
-        }
+        #endregion
     }
 }

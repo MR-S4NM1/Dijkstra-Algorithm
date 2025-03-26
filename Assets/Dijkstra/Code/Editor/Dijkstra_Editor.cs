@@ -20,9 +20,13 @@ namespace MrSanmi.DijkstraAlgorithm
             {
                 _dijkstra.GenerateNodes();
             }
-            if (GUILayout.Button("Clear All Nodes"))
+            if (GUILayout.Button("Clear All"))
             {
-                _dijkstra.DeleteNodes();
+                _dijkstra.ClearAll();
+            }
+            if (GUILayout.Button("Generate Graph"))
+            {
+                _dijkstra.GenerateGraph();
             }
 
         }
