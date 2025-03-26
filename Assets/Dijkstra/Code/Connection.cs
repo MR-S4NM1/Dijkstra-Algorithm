@@ -63,9 +63,9 @@ namespace MrSanmi.DijkstraAlgorithm
 
         public Node OtherNode(Node value)
         {
-            if(value == _internalData.nodeA || value == _internalData.nodeB)
+            if (value == _internalData.nodeA || value == _internalData.nodeB)
             {
-                if(value == _internalData.nodeA)
+                if (value == _internalData.nodeA)
                 {
                     return _internalData.nodeA;
                 }
@@ -77,6 +77,42 @@ namespace MrSanmi.DijkstraAlgorithm
             Debug.LogError($" {this.name} {gameObject.name} - Node {value.name} is asking for a connection " +
                 $"not valid with {_internalData.nodeA.name} - {_internalData.nodeB.name}.", gameObject);
             return null;
+        }
+
+        public bool ContainsNode(Node value)
+        {
+            bool itContainsIt;
+            if (value == _internalData.nodeA || value == _internalData.nodeB)
+            {
+                itContainsIt = true;
+            }
+            else
+            {
+                itContainsIt = false;
+            }
+            return itContainsIt;
+        }
+
+        #endregion
+
+        #region GettersAndSetters
+
+        public Node NodeA
+        {
+            get { return _internalData.nodeA; }
+            set { _internalData.nodeA = value; }
+        }
+
+        public Node NodeB
+        {
+            get { return _internalData.nodeB; }
+            set { _internalData.nodeB = value; }
+        }
+
+        public float DistanceBetweenNodes
+        {
+            get { return _internalData.distanceBetweenNodes; }
+            set { _internalData.distanceBetweenNodes = value; }
         }
 
         #endregion

@@ -16,5 +16,15 @@ namespace MrSanmi.DijkstraAlgorithm
         [SerializeField] protected List<Connection> connections;
 
         #endregion
+
+        #region GettersAndSetters
+
+        public List<Connection> Connections
+        {
+            get { return connections; }
+            set { connections = value; }
+        }
+
+        #endregion
     }
 }

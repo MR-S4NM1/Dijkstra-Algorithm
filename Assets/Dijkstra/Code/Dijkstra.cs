@@ -1,5 +1,8 @@
 using NUnit.Framework.Interfaces;
 using System.Collections.Generic;
+using System.Linq;
+using Unity.VisualScripting;
+using UnityEditor.MemoryProfiler;
 using UnityEngine;
 using static UnityEditor.ShaderGraph.Internal.KeywordDependentCollection;
 
@@ -10,7 +13,6 @@ namespace MrSanmi.DijkstraAlgorithm
     {
         [SerializeField] public Vector2 nodesMatrixSize;
         [SerializeField] public Vector2 numberOfNodes;
-        [SerializeField] public LayerMask layerMask;
     }
 
     [System.Serializable]
@@ -29,7 +31,7 @@ namespace MrSanmi.DijkstraAlgorithm
         [SerializeField] public GameObject nodePrefab;
 
         [Space]
-        [SerializeField] public Connection connection;
+        [SerializeField] public GameObject connectionPrefab;
         [SerializeField] public List<Connection> connections;
     }
 
@@ -47,13 +49,25 @@ namespace MrSanmi.DijkstraAlgorithm
         [SerializeField] public GameObject nodeInstance;
         #endregion
 
+        #region Knobs
+
+        [SerializeField] protected LayerMask _layerMask;
+
+        #endregion
+
         #region RuntimeVariables
 
         protected Node actualNode;
         protected Connection _actualConnection;
+        protected Connection _actualConnection2;
         protected float xOffset;
         protected float yOffset;
         protected float distanceThreshold;
+        protected GameObject tempConnection;
+        protected GameObject tempConnection2;
+        RaycastHit _currentHit;
+        RaycastHit _currentHit2;
+        protected bool _containsNode;
 
         #endregion
 
@@ -154,25 +168,87 @@ namespace MrSanmi.DijkstraAlgorithm
                         if ((actualNode != _internalData.nodes[j]) && 
                             (_internalData.nodes[j].nodeState == NodeStates.HABILITADO))
                         {
-                                if (Vector3.Distance(actualNode.transform.position,
-                                    _internalData.nodes[j].transform.position) <= distanceThreshold)
+                            if (Vector3.Distance(actualNode.transform.position,
+                                _internalData.nodes[j].transform.position) <= distanceThreshold)
+                            {
+                                //TODO: Validar si ya existía conexión entre ellos.
+                                if(_internalData.connections.Count > 0)
                                 {
-                                    //TODO: Validar si ya existía conección entre ellos.
-
-                                    if(!Physics.Raycast(actualNode.transform.position, _internalData.nodes[j].transform.position,
-                                        distanceThreshold, _parameters.layerMask)) 
+                                    _containsNode = false;
+                                    foreach(Connection connection in _internalData.connections)
                                     {
-                                        //if (!Physics.Raycast()
-                                        //{
-                                        //    GameObject connection = Instanc
-                                        //}
+                                        if(connection.ContainsNode(actualNode) && !connection.ContainsNode(_internalData.nodes[j]))
+                                        {
+                                            _containsNode = false;
+                                        }
+                                        else if (connection.ContainsNode(actualNode) && connection.ContainsNode(_internalData.nodes[j]))
+                                        {
+                                            _containsNode = true;
+                                            break;
+                                        }
+                                    }
+                                    if (!_containsNode)
+                                    {
+                                        if (Physics.Linecast(actualNode.transform.position, _internalData.nodes[j].transform.position,
+                                            out _currentHit))
+                                        {
+                                            if (_currentHit.collider.gameObject.layer != LayerMask.NameToLayer("Obstacle"))
+                                            {
+                                                if (Physics.Linecast(_internalData.nodes[j].transform.position, actualNode.transform.position,
+                                                    out _currentHit2))
+                                                {
+                                                    if (_currentHit2.collider.gameObject.layer != LayerMask.NameToLayer("Obstacle"))
+                                                    {
+                                                        tempConnection = Instantiate(_internalData.connectionPrefab);
+                                                        _actualConnection = tempConnection.GetComponent<Connection>();
+                                                        _actualConnection.NodeA = actualNode;
+                                                        _actualConnection.NodeB = _internalData.nodes[j];
+                                                        _actualConnection.DistanceBetweenNodes = (_actualConnection.NodeB.transform.position -
+                                                            _actualConnection.NodeA.transform.position).magnitude;
+                                                        _actualConnection.gameObject.transform.SetParent(this.gameObject.transform.GetChild(1), true);
+                                                        actualNode.Connections.Add(_actualConnection);
+                                                        _internalData.nodes[j].Connections.Add(_actualConnection);
+                                                        _internalData.connections.Add(_actualConnection);
+                                                    }
+                                                }
+                                            }
+                                        }
                                     }
                                 }
+                                else
+                                {
+                                    if (Physics.Linecast(actualNode.transform.position, _internalData.nodes[j].transform.position,
+                                    out _currentHit))
+                                    {
+                                        if (_currentHit.collider.gameObject.layer != LayerMask.NameToLayer("Obstacle"))
+                                        {
+                                            if (Physics.Linecast(_internalData.nodes[j].transform.position, actualNode.transform.position,
+                                                out _currentHit2))
+                                            {
+                                                if (_currentHit.collider.gameObject.layer != LayerMask.NameToLayer("Obstacle"))
+                                                {
+                                                    tempConnection = Instantiate(_internalData.connectionPrefab);
+                                                    _actualConnection = tempConnection.GetComponent<Connection>();
+                                                    _actualConnection.NodeA = actualNode;
+                                                    _actualConnection.NodeB = _internalData.nodes[j];
+                                                    _actualConnection.DistanceBetweenNodes = (_actualConnection.NodeB.transform.position -
+                                                        _actualConnection.NodeA.transform.position).magnitude;
+                                                    _actualConnection.gameObject.transform.SetParent(this.gameObject.transform.GetChild(1), true);
+
+                                                    actualNode.Connections.Add(_actualConnection);
+                                                    _internalData.connections.Add(_actualConnection);
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }
             }
         }
+
         #endregion
     }
 }
