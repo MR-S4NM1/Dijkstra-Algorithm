@@ -65,9 +65,11 @@ namespace MrSanmi.DijkstraAlgorithm
         protected float distanceThreshold;
         protected GameObject tempConnection;
         protected GameObject tempConnection2;
-        RaycastHit _currentHit;
-        RaycastHit _currentHit2;
+        protected RaycastHit _currentHit;
+        protected RaycastHit _currentHit2;
         protected bool _containsNode;
+        protected int horizontalNehighbours;
+        protected int verticalNeighbours;
 
         #endregion
 
@@ -181,6 +183,10 @@ namespace MrSanmi.DijkstraAlgorithm
                                         {
                                             _containsNode = false;
                                         }
+                                        else if(!connection.ContainsNode(actualNode) && !connection.ContainsNode(_internalData.nodes[j]))
+                                        {
+                                            _containsNode = false;
+                                        }
                                         else if (connection.ContainsNode(actualNode) && connection.ContainsNode(_internalData.nodes[j]))
                                         {
                                             _containsNode = true;
@@ -245,6 +251,19 @@ namespace MrSanmi.DijkstraAlgorithm
                             }
                         }
                     }
+                }
+            }
+        }
+
+        public void ReduceNodes()
+        {
+            foreach(Node node in _internalData.nodes)
+            {
+                horizontalNehighbours = 0;
+                verticalNeighbours = 0;
+                foreach(Connection connection in node.Connections)
+                {
+                    //if(node)
                 }
             }
         }
