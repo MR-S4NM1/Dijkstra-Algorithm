@@ -160,11 +160,11 @@ namespace MrSanmi.DijkstraAlgorithm
                     Mathf.Pow(yOffset, 2.0f)
                 );
 
-            for (int i = 0; i < _internalData.nodes.Count; ++i)
+            foreach (Node node in _internalData.nodes)
             {
-                if (_internalData.nodes[i].nodeState == NodeStates.HABILITADO)
+                if (node.nodeState == NodeStates.HABILITADO)
                 {
-                    actualNode = _internalData.nodes[i];
+                    actualNode = node;
                     for(int j = 0; j < _internalData.nodes.Count; ++j)
                     {
                         if ((actualNode != _internalData.nodes[j]) && 
