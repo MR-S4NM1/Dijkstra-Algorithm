@@ -1,10 +1,7 @@
 using NUnit.Framework.Interfaces;
 using System.Collections.Generic;
 using System.Linq;
-using Unity.VisualScripting;
-using UnityEditor.MemoryProfiler;
 using UnityEngine;
-using static UnityEditor.ShaderGraph.Internal.KeywordDependentCollection;
 
 namespace MrSanmi.DijkstraAlgorithm
 {
@@ -59,12 +56,10 @@ namespace MrSanmi.DijkstraAlgorithm
 
         protected Node actualNode;
         protected Connection _actualConnection;
-        protected Connection _actualConnection2;
-        protected float xOffset;
-        protected float yOffset;
-        protected float distanceThreshold;
-        protected GameObject tempConnection;
-        protected GameObject tempConnection2;
+        protected float _xOffset;
+        protected float _yOffset;
+        protected float _distanceThreshold;
+        protected GameObject _tempConnection;
         protected RaycastHit _currentHit;
         protected RaycastHit _currentHit2;
         protected bool _containsNode;
@@ -84,8 +79,8 @@ namespace MrSanmi.DijkstraAlgorithm
             ClearAll();
 
             Vector3 tempPos = _internalData.startPosition.position;
-            xOffset = (float)_parameters.nodesMatrixSize.x / ((float)_parameters.numberOfNodes.x - 1.0f);
-            yOffset = (float)_parameters.nodesMatrixSize.y / ((float)_parameters.numberOfNodes.y - 1.0f);
+            _xOffset = (float)_parameters.nodesMatrixSize.x / ((float)_parameters.numberOfNodes.x - 1.0f);
+            _yOffset = (float)_parameters.nodesMatrixSize.y / ((float)_parameters.numberOfNodes.y - 1.0f);
 
             for(float i = 0; i < _parameters.numberOfNodes.y; ++i)
             {
@@ -121,11 +116,11 @@ namespace MrSanmi.DijkstraAlgorithm
                     actualNode.gameObject.name = "Node " + "(" + actualNode.gameObject.transform.position.x.ToString("F2") + ", "
                         + actualNode.gameObject.transform.position.z.ToString("F2") + ")" + '\n' + actualNode.nodeState.ToString();
                     nodeInstance.transform.SetParent(this.gameObject.transform.GetChild(0), true);
-                    tempPos += new Vector3(0.0f, 0.0f, xOffset);
+                    tempPos += new Vector3(0.0f, 0.0f, _xOffset);
                 }
 
                 tempPos.z = _internalData.startNode.transform.position.z;
-                tempPos += new Vector3(yOffset, 0.0f, 0.0f);
+                tempPos += new Vector3(_yOffset, 0.0f, 0.0f);
             }
 
             _internalData.nodes.Add(_internalData.endNode);
@@ -152,26 +147,25 @@ namespace MrSanmi.DijkstraAlgorithm
 
         public void GenerateGraph()
         {
-            xOffset = (float)_parameters.nodesMatrixSize.x / ((float)_parameters.numberOfNodes.x - 1.0f);
-            yOffset = (float)_parameters.nodesMatrixSize.y / ((float)_parameters.numberOfNodes.y - 1.0f);
+            _xOffset = (float)_parameters.nodesMatrixSize.x / ((float)_parameters.numberOfNodes.x - 1.0f);
+            _yOffset = (float)_parameters.nodesMatrixSize.y / ((float)_parameters.numberOfNodes.y - 1.0f);
 
-            distanceThreshold = Mathf.Sqrt(
-                    Mathf.Pow(xOffset, 2.0f) + 
-                    Mathf.Pow(yOffset, 2.0f)
+            _distanceThreshold = Mathf.Sqrt(
+                    Mathf.Pow(_xOffset, 2.0f) + 
+                    Mathf.Pow(_yOffset, 2.0f)
                 );
 
             foreach (Node node in _internalData.nodes)
             {
                 if (node.nodeState == NodeStates.HABILITADO)
                 {
-                    actualNode = node;
                     for(int j = 0; j < _internalData.nodes.Count; ++j)
                     {
-                        if ((actualNode != _internalData.nodes[j]) && 
+                        if ((node != _internalData.nodes[j]) && 
                             (_internalData.nodes[j].nodeState == NodeStates.HABILITADO))
                         {
-                            if (Vector3.Distance(actualNode.transform.position,
-                                _internalData.nodes[j].transform.position) <= distanceThreshold)
+                            if (Vector3.Distance(node.transform.position,
+                                _internalData.nodes[j].transform.position) <= _distanceThreshold)
                             {
                                 //TODO: Validar si ya existía conexión entre ellos.
                                 if(_internalData.connections.Count > 0)
@@ -179,15 +173,7 @@ namespace MrSanmi.DijkstraAlgorithm
                                     _containsNode = false;
                                     foreach(Connection connection in _internalData.connections)
                                     {
-                                        if(connection.ContainsNode(actualNode) && !connection.ContainsNode(_internalData.nodes[j]))
-                                        {
-                                            _containsNode = false;
-                                        }
-                                        else if(!connection.ContainsNode(actualNode) && !connection.ContainsNode(_internalData.nodes[j]))
-                                        {
-                                            _containsNode = false;
-                                        }
-                                        else if (connection.ContainsNode(actualNode) && connection.ContainsNode(_internalData.nodes[j]))
+                                        if (connection.ContainsNode(node) && connection.ContainsNode(_internalData.nodes[j]))
                                         {
                                             _containsNode = true;
                                             break;
@@ -195,24 +181,24 @@ namespace MrSanmi.DijkstraAlgorithm
                                     }
                                     if (!_containsNode)
                                     {
-                                        if (Physics.Linecast(actualNode.transform.position, _internalData.nodes[j].transform.position,
-                                            out _currentHit))
+                                        if (Physics.Raycast(node.transform.position, _internalData.nodes[j].transform.position - node.transform.position,
+                                            out _currentHit, _distanceThreshold))
                                         {
                                             if (_currentHit.collider.gameObject.layer != LayerMask.NameToLayer("Obstacle"))
                                             {
-                                                if (Physics.Linecast(_internalData.nodes[j].transform.position, actualNode.transform.position,
-                                                    out _currentHit2))
+                                                if (Physics.Raycast(_internalData.nodes[j].transform.position, node.transform.position - _internalData.nodes[j].transform.position,
+                                                    out _currentHit2, _distanceThreshold))
                                                 {
                                                     if (_currentHit2.collider.gameObject.layer != LayerMask.NameToLayer("Obstacle"))
                                                     {
-                                                        tempConnection = Instantiate(_internalData.connectionPrefab);
-                                                        _actualConnection = tempConnection.GetComponent<Connection>();
-                                                        _actualConnection.NodeA = actualNode;
+                                                        _tempConnection = Instantiate(_internalData.connectionPrefab);
+                                                        _actualConnection = _tempConnection.GetComponent<Connection>();
+                                                        _actualConnection.NodeA = node;
                                                         _actualConnection.NodeB = _internalData.nodes[j];
                                                         _actualConnection.DistanceBetweenNodes = (_actualConnection.NodeB.transform.position -
                                                             _actualConnection.NodeA.transform.position).magnitude;
                                                         _actualConnection.gameObject.transform.SetParent(this.gameObject.transform.GetChild(1), true);
-                                                        actualNode.Connections.Add(_actualConnection);
+                                                        node.Connections.Add(_actualConnection);
                                                         _internalData.nodes[j].Connections.Add(_actualConnection);
                                                         _internalData.connections.Add(_actualConnection);
                                                     }
@@ -223,25 +209,25 @@ namespace MrSanmi.DijkstraAlgorithm
                                 }
                                 else
                                 {
-                                    if (Physics.Linecast(actualNode.transform.position, _internalData.nodes[j].transform.position,
-                                    out _currentHit))
+                                    if (Physics.Raycast(node.transform.position, _internalData.nodes[j].transform.position - node.transform.position,
+                                            out _currentHit, _distanceThreshold))
                                     {
                                         if (_currentHit.collider.gameObject.layer != LayerMask.NameToLayer("Obstacle"))
                                         {
-                                            if (Physics.Linecast(_internalData.nodes[j].transform.position, actualNode.transform.position,
-                                                out _currentHit2))
+                                            if (Physics.Raycast(_internalData.nodes[j].transform.position, node.transform.position - _internalData.nodes[j].transform.position,
+                                                out _currentHit2, _distanceThreshold))
                                             {
-                                                if (_currentHit.collider.gameObject.layer != LayerMask.NameToLayer("Obstacle"))
+                                                if (_currentHit2.collider.gameObject.layer != LayerMask.NameToLayer("Obstacle"))
                                                 {
-                                                    tempConnection = Instantiate(_internalData.connectionPrefab);
-                                                    _actualConnection = tempConnection.GetComponent<Connection>();
-                                                    _actualConnection.NodeA = actualNode;
+                                                    _tempConnection = Instantiate(_internalData.connectionPrefab);
+                                                    _actualConnection = _tempConnection.GetComponent<Connection>();
+                                                    _actualConnection.NodeA = node;
                                                     _actualConnection.NodeB = _internalData.nodes[j];
                                                     _actualConnection.DistanceBetweenNodes = (_actualConnection.NodeB.transform.position -
                                                         _actualConnection.NodeA.transform.position).magnitude;
                                                     _actualConnection.gameObject.transform.SetParent(this.gameObject.transform.GetChild(1), true);
-
-                                                    actualNode.Connections.Add(_actualConnection);
+                                                    node.Connections.Add(_actualConnection);
+                                                    _internalData.nodes[j].Connections.Add(_actualConnection);
                                                     _internalData.connections.Add(_actualConnection);
                                                 }
                                             }
