@@ -6,6 +6,7 @@ TagManager:
   tags:
   - FinalNode
   - Obstacle
+  - InitialNode
   layers:
   - Default
   - TransparentFX

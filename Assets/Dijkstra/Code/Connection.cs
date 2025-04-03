@@ -19,10 +19,20 @@ namespace MrSanmi.DijkstraAlgorithm
         [SerializeField] public GameObject _debugDistanceBetweenNodes;
     }
 
+    public enum ConnectionDirection
+    {
+        LEFT_DIAGONAL,
+        IRREGULAR_DIAGONAL,
+        RIGHT_DIAGONAL,
+        HORIZONTAL,
+        VERTICAL
+    }
+
     public class Connection : MonoBehaviour
     {
         #region InternalData
 
+        [SerializeField] public ConnectionDirection connectionType;
         [SerializeField] protected ConnectionInternalData _internalData;
 
         #endregion
@@ -91,6 +101,20 @@ namespace MrSanmi.DijkstraAlgorithm
                 itContainsIt = false;
             }
             return itContainsIt;
+        }
+
+        public bool IsNodeA(Node value)
+        {
+            bool itIsNodeA;
+            if (value == _internalData.nodeA)
+            {
+                itIsNodeA = true;
+            }
+            else
+            {
+                itIsNodeA = false;
+            }
+            return itIsNodeA;
         }
 
         #endregion

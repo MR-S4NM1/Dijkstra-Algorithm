@@ -1,5 +1,5 @@
-using NUnit.Framework.Interfaces;
 using System.Collections.Generic;
+using System.Collections;
 using System.Linq;
 using UnityEngine;
 
@@ -31,8 +31,6 @@ namespace MrSanmi.DijkstraAlgorithm
         [SerializeField] public GameObject connectionPrefab;
         [SerializeField] public List<Connection> connections;
     }
-
-
     public class Dijkstra : MonoBehaviour
     {
         #region References
@@ -65,6 +63,8 @@ namespace MrSanmi.DijkstraAlgorithm
         protected bool _containsNode;
         protected int horizontalNehighbours;
         protected int verticalNeighbours;
+        protected int rightDiagonal;
+        protected int leftDiagonal;
 
         #endregion
 
@@ -94,6 +94,7 @@ namespace MrSanmi.DijkstraAlgorithm
                     if (i == 0 && j == 0)
                     {
                         _internalData.startNode = actualNode;
+                        actualNode.gameObject.tag = "InitialNode";
                     }
 
                     Collider[] hitColliders = Physics.OverlapSphere(actualNode.transform.position, 0.5f);
@@ -201,6 +202,46 @@ namespace MrSanmi.DijkstraAlgorithm
                                                         node.Connections.Add(_actualConnection);
                                                         _internalData.nodes[j].Connections.Add(_actualConnection);
                                                         _internalData.connections.Add(_actualConnection);
+
+                                                        //if ((Vector3.Dot(_internalData.nodes[j].gameObject.transform.position -
+                                                        //    node.gameObject.transform.position, Vector3.right) >= 0.9f) &&
+                                                        //    (Vector3.Dot(_internalData.nodes[j].gameObject.transform.position -
+                                                        //    node.gameObject.transform.position, Vector3.up) <= 0.1f))
+                                                        //{
+                                                        //    node._nodePos = NodePos.HORIZONTAL;
+                                                        //}
+                                                        //else if ((Vector3.Dot(_internalData.nodes[j].gameObject.transform.position -
+                                                        //    node.gameObject.transform.position, Vector3.right) <= 0.1f) &&
+                                                        //    (Vector3.Dot(_internalData.nodes[j].gameObject.transform.position -
+                                                        //    node.gameObject.transform.position, Vector3.up) >= 0.9f))
+                                                        //{
+                                                        //    node._nodePos = NodePos.VERTICAL;
+                                                        //}
+
+                                                        if ((_internalData.nodes[j].transform.position - node.transform.position).normalized ==
+                                                            Vector3.forward)
+                                                        {
+                                                            _actualConnection.connectionType = ConnectionDirection.HORIZONTAL;
+                                                        }
+                                                        else if ((_internalData.nodes[j].transform.position - node.transform.position).normalized ==
+                                                            Vector3.right)
+                                                        {
+                                                            _actualConnection.connectionType = ConnectionDirection.VERTICAL;
+                                                        }
+                                                        else if ((_internalData.nodes[j].transform.position - node.transform.position).normalized ==
+                                                            new Vector3(0.0f, 0.5f, 0.5f))
+                                                        {
+                                                            _actualConnection.connectionType = ConnectionDirection.RIGHT_DIAGONAL;
+                                                        }
+                                                        else if ((_internalData.nodes[j].transform.position - node.transform.position).normalized ==
+                                                            new Vector3(0.0f, 0.5f, -0.5f))
+                                                        {
+                                                            _actualConnection.connectionType = ConnectionDirection.LEFT_DIAGONAL;
+                                                        }
+                                                        else
+                                                        {
+                                                            _actualConnection.connectionType = ConnectionDirection.IRREGULAR_DIAGONAL;
+                                                        }
                                                     }
                                                 }
                                             }
@@ -245,14 +286,78 @@ namespace MrSanmi.DijkstraAlgorithm
         {
             foreach(Node node in _internalData.nodes)
             {
-                horizontalNehighbours = 0;
-                verticalNeighbours = 0;
-                foreach(Connection connection in node.Connections)
+                if (node.nodeState == NodeStates.HABILITADO)
                 {
-                    //if(node)
+                    if (node.Connections.Count == 2)
+                    {
+                        if (node.Connections[0].connectionType == node.Connections[1].connectionType)
+                        {
+                            _tempConnection = Instantiate(_internalData.connectionPrefab);
+                            _actualConnection = _tempConnection.GetComponent<Connection>();
+
+                            if (node.Connections[0].IsNodeA(node))
+                            {
+                                _actualConnection.NodeA = node.Connections[0].NodeB;
+                                _actualConnection.NodeB = node.Connections[1].NodeA;
+                            }
+                            else
+                            {
+                                _actualConnection.NodeA = node.Connections[0].NodeA;
+                                _actualConnection.NodeB = node.Connections[1].NodeB;
+                            }
+
+                            _actualConnection.DistanceBetweenNodes = (_actualConnection.NodeB.transform.position -
+                                _actualConnection.NodeA.transform.position).magnitude;
+
+                            _actualConnection.gameObject.transform.SetParent(this.gameObject.transform.GetChild(1), true);
+
+                            if ((_actualConnection.NodeB.transform.position - _actualConnection.NodeA.transform.position).normalized ==
+                                Vector3.forward)
+                            {
+                                _actualConnection.connectionType = ConnectionDirection.HORIZONTAL;
+                            }
+                            else if ((_actualConnection.NodeB.transform.position - _actualConnection.NodeA.transform.position).normalized ==
+                                Vector3.right)
+                            {
+                                _actualConnection.connectionType = ConnectionDirection.VERTICAL;
+                            }
+                            else if ((_actualConnection.NodeB.transform.position - _actualConnection.NodeA.transform.position).normalized ==
+                                new Vector3(0.0f, 0.5f, 0.5f))
+                            {
+                                _actualConnection.connectionType = ConnectionDirection.RIGHT_DIAGONAL;
+                            }
+                            else if ((_actualConnection.NodeB.transform.position - _actualConnection.NodeA.transform.position).normalized ==
+                                new Vector3(0.0f, 0.5f, -0.5f))
+                            {
+                                _actualConnection.connectionType = ConnectionDirection.LEFT_DIAGONAL;
+                            }
+                            else
+                            {
+                                _actualConnection.connectionType = ConnectionDirection.IRREGULAR_DIAGONAL;
+                            }
+
+                            node.nodeState = NodeStates.DESHABILITADO;
+                            node.gameObject.SetActive(false);
+                            _internalData.connections.Remove(node.Connections[0]);
+                            _internalData.connections.Remove(node.Connections[1]);
+                            _internalData.connections.Add(_actualConnection);
+
+                            _actualConnection.NodeA.Connections.Add(_actualConnection);
+                            _actualConnection.NodeB.Connections.Add(_actualConnection);
+
+                            DestroyImmediate(node.Connections[1].gameObject);
+                            DestroyImmediate(node.Connections[0].gameObject);
+                        }
+                    }
+                    _actualConnection.NodeA.Connections.RemoveAll(item => item == null);
+                    _actualConnection.NodeB.Connections.RemoveAll(item => item == null);
                 }
             }
         }
+
+        #endregion
+
+        #region LocalMethods
 
         #endregion
     }

@@ -28,6 +28,10 @@ namespace MrSanmi.DijkstraAlgorithm
             {
                 _dijkstra.GenerateGraph();
             }
+            if(GUILayout.Button("Reduce Nodes"))
+            {
+                _dijkstra.ReduceNodes();
+            }
 
         }
     }
