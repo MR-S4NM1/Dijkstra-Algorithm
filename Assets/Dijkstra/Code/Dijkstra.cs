@@ -54,17 +54,14 @@ namespace MrSanmi.DijkstraAlgorithm
 
         protected Node actualNode;
         protected Connection _actualConnection;
+        protected Connection _actualConnectionA;
+        protected Connection _actualConnectionB;
         protected float _xOffset;
         protected float _yOffset;
         protected float _distanceThreshold;
         protected GameObject _tempConnection;
         protected RaycastHit _currentHit;
-        protected RaycastHit _currentHit2;
         protected bool _containsNode;
-        protected int horizontalNehighbours;
-        protected int verticalNeighbours;
-        protected int rightDiagonal;
-        protected int leftDiagonal;
 
         #endregion
 
@@ -148,6 +145,7 @@ namespace MrSanmi.DijkstraAlgorithm
 
         public void GenerateGraph()
         {
+            //TODO: CAMBIAR LA HIPOTENUSA POR SI NO ES IGUAL EL ALTO Y LARGO
             _xOffset = (float)_parameters.nodesMatrixSize.x / ((float)_parameters.numberOfNodes.x - 1.0f);
             _yOffset = (float)_parameters.nodesMatrixSize.y / ((float)_parameters.numberOfNodes.y - 1.0f);
 
@@ -188,9 +186,9 @@ namespace MrSanmi.DijkstraAlgorithm
                                             if (_currentHit.collider.gameObject.layer != LayerMask.NameToLayer("Obstacle"))
                                             {
                                                 if (Physics.Raycast(_internalData.nodes[j].transform.position, node.transform.position - _internalData.nodes[j].transform.position,
-                                                    out _currentHit2, _distanceThreshold))
+                                                    out _currentHit, _distanceThreshold))
                                                 {
-                                                    if (_currentHit2.collider.gameObject.layer != LayerMask.NameToLayer("Obstacle"))
+                                                    if (_currentHit.collider.gameObject.layer != LayerMask.NameToLayer("Obstacle"))
                                                     {
                                                         _tempConnection = Instantiate(_internalData.connectionPrefab);
                                                         _actualConnection = _tempConnection.GetComponent<Connection>();
@@ -229,12 +227,12 @@ namespace MrSanmi.DijkstraAlgorithm
                                                             _actualConnection.connectionType = ConnectionDirection.VERTICAL;
                                                         }
                                                         else if ((_internalData.nodes[j].transform.position - node.transform.position).normalized ==
-                                                            new Vector3(0.0f, 0.5f, 0.5f))
+                                                            new Vector3(0.5f, 0.0f, 0.5f))
                                                         {
                                                             _actualConnection.connectionType = ConnectionDirection.RIGHT_DIAGONAL;
                                                         }
                                                         else if ((_internalData.nodes[j].transform.position - node.transform.position).normalized ==
-                                                            new Vector3(0.0f, 0.5f, -0.5f))
+                                                            new Vector3(0.5f, 0.0f, -0.5f))
                                                         {
                                                             _actualConnection.connectionType = ConnectionDirection.LEFT_DIAGONAL;
                                                         }
@@ -256,9 +254,9 @@ namespace MrSanmi.DijkstraAlgorithm
                                         if (_currentHit.collider.gameObject.layer != LayerMask.NameToLayer("Obstacle"))
                                         {
                                             if (Physics.Raycast(_internalData.nodes[j].transform.position, node.transform.position - _internalData.nodes[j].transform.position,
-                                                out _currentHit2, _distanceThreshold))
+                                                out _currentHit, _distanceThreshold))
                                             {
-                                                if (_currentHit2.collider.gameObject.layer != LayerMask.NameToLayer("Obstacle"))
+                                                if (_currentHit.collider.gameObject.layer != LayerMask.NameToLayer("Obstacle"))
                                                 {
                                                     _tempConnection = Instantiate(_internalData.connectionPrefab);
                                                     _actualConnection = _tempConnection.GetComponent<Connection>();
@@ -311,6 +309,7 @@ namespace MrSanmi.DijkstraAlgorithm
 
                             _actualConnection.gameObject.transform.SetParent(this.gameObject.transform.GetChild(1), true);
 
+                            #region NewConnectionDirection
                             if ((_actualConnection.NodeB.transform.position - _actualConnection.NodeA.transform.position).normalized ==
                                 Vector3.forward)
                             {
@@ -322,12 +321,12 @@ namespace MrSanmi.DijkstraAlgorithm
                                 _actualConnection.connectionType = ConnectionDirection.VERTICAL;
                             }
                             else if ((_actualConnection.NodeB.transform.position - _actualConnection.NodeA.transform.position).normalized ==
-                                new Vector3(0.0f, 0.5f, 0.5f))
+                                new Vector3(0.5f, 0.0f, 0.5f))
                             {
                                 _actualConnection.connectionType = ConnectionDirection.RIGHT_DIAGONAL;
                             }
                             else if ((_actualConnection.NodeB.transform.position - _actualConnection.NodeA.transform.position).normalized ==
-                                new Vector3(0.0f, 0.5f, -0.5f))
+                                new Vector3(0.5f, 0.0f, -0.5f))
                             {
                                 _actualConnection.connectionType = ConnectionDirection.LEFT_DIAGONAL;
                             }
@@ -335,6 +334,7 @@ namespace MrSanmi.DijkstraAlgorithm
                             {
                                 _actualConnection.connectionType = ConnectionDirection.IRREGULAR_DIAGONAL;
                             }
+                            #endregion
 
                             node.nodeState = NodeStates.DESHABILITADO;
                             node.gameObject.SetActive(false);
@@ -348,9 +348,87 @@ namespace MrSanmi.DijkstraAlgorithm
                             DestroyImmediate(node.Connections[1].gameObject);
                             DestroyImmediate(node.Connections[0].gameObject);
                         }
+                        _actualConnection.NodeA.Connections.RemoveAll(item => item == null);
+                        _actualConnection.NodeB.Connections.RemoveAll(item => item == null);
                     }
-                    _actualConnection.NodeA.Connections.RemoveAll(item => item == null);
-                    _actualConnection.NodeB.Connections.RemoveAll(item => item == null);
+                    
+                    if(node.Connections.Count == 8)
+                    {
+                        foreach (Connection connectionA in node.Connections)
+                        {
+                            _actualConnectionA = connectionA;
+                            for (int j = 0; j < node.Connections.Count; ++j)
+                            {
+                                _actualConnectionB = node.Connections[j];
+
+                                if ((_actualConnectionA.connectionType == _actualConnectionB.connectionType) &&
+                                    (_actualConnectionA != _actualConnectionB))
+                                {
+                                    //Debug.Log($"{_actualConnectionA.gameObject.name} ({_actualConnectionA.gameObject.transform.position}) - " +
+                                    //    $"{_actualConnectionB.gameObject.name} - ({_actualConnectionB.gameObject.transform.position})");
+                                    _tempConnection = Instantiate(_internalData.connectionPrefab);
+                                    _actualConnection = _tempConnection.GetComponent<Connection>();
+
+                                    if (_actualConnectionA.IsNodeA(node))
+                                    {
+                                        _actualConnection.NodeA = _actualConnectionA.NodeB;
+                                        _actualConnection.NodeB = _actualConnectionB.NodeA;
+                                    }
+                                    else
+                                    {
+                                        _actualConnection.NodeA = _actualConnectionA.NodeA;
+                                        _actualConnection.NodeB = _actualConnectionB.NodeB;
+                                    }
+
+                                    _actualConnection.DistanceBetweenNodes = (_actualConnection.NodeB.transform.position -
+                                        _actualConnection.NodeA.transform.position).magnitude;
+
+                                    _actualConnection.gameObject.transform.SetParent(this.gameObject.transform.GetChild(1), true);
+
+                                    #region NewConnectionDirection
+                                    if ((_actualConnection.NodeB.transform.position - _actualConnection.NodeA.transform.position).normalized ==
+                                        Vector3.forward)
+                                    {
+                                        _actualConnection.connectionType = ConnectionDirection.HORIZONTAL;
+                                    }
+                                    else if ((_actualConnection.NodeB.transform.position - _actualConnection.NodeA.transform.position).normalized ==
+                                        Vector3.right)
+                                    {
+                                        _actualConnection.connectionType = ConnectionDirection.VERTICAL;
+                                    }
+                                    else if ((_actualConnection.NodeB.transform.position - _actualConnection.NodeA.transform.position).normalized ==
+                                        new Vector3(0.5f, 0.0f, 0.5f))
+                                    {
+                                        _actualConnection.connectionType = ConnectionDirection.RIGHT_DIAGONAL;
+                                    }
+                                    else if ((_actualConnection.NodeB.transform.position - _actualConnection.NodeA.transform.position).normalized ==
+                                        new Vector3(0.5f, 0.0f, -0.5f))
+                                    {
+                                        _actualConnection.connectionType = ConnectionDirection.LEFT_DIAGONAL;
+                                    }
+                                    else
+                                    {
+                                        _actualConnection.connectionType = ConnectionDirection.IRREGULAR_DIAGONAL;
+                                    }
+                                    #endregion
+
+                                    _internalData.connections.Remove(node.Connections[j]);
+                                    _internalData.connections.Add(_actualConnection);
+
+                                    _actualConnection.NodeA.Connections.Add(_actualConnection);
+                                    _actualConnection.NodeB.Connections.Add(_actualConnection);
+
+                                    DestroyImmediate(node.Connections[j].gameObject);
+                                }
+                                _actualConnection.NodeA.Connections.RemoveAll(item => item == null);
+                                _actualConnection.NodeB.Connections.RemoveAll(item => item == null);
+                            }
+                            node.nodeState = NodeStates.DESHABILITADO;
+                            node.gameObject.SetActive(false);
+                            _internalData.connections.Remove(connectionA);
+                            DestroyImmediate(connectionA.gameObject);
+                        }
+                    }
                 }
             }
         }
