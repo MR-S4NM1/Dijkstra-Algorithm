@@ -62,8 +62,6 @@ namespace MrSanmi.DijkstraAlgorithm
         protected GameObject _tempConnection;
         protected RaycastHit _currentHit;
         protected bool _containsNode;
-        protected bool _hasConnectedHorizontally;
-        protected bool _hasConnectedVertically;
 
         #endregion
 
@@ -340,8 +338,6 @@ namespace MrSanmi.DijkstraAlgorithm
                     }
                     else if(node.Connections.Count == 8)
                     {
-                        _hasConnectedHorizontally = false;
-                        _hasConnectedVertically = false;
                         foreach (Connection connectionA in node.Connections)
                         {
                             if (connectionA != null)
