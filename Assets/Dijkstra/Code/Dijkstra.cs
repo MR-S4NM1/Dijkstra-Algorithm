@@ -305,15 +305,15 @@ namespace MrSanmi.DijkstraAlgorithm
                             {
                                 _actualConnection.connectionType = ConnectionDirection.VERTICAL;
                             }
-                            else if ((_actualConnection.NodeB.transform.position - _actualConnection.NodeA.transform.position).normalized ==
-                                new Vector3(0.5f, 0.0f, 0.5f))
-                            {
-                                _actualConnection.connectionType = ConnectionDirection.RIGHT_DIAGONAL;
-                            }
-                            else if ((_actualConnection.NodeB.transform.position - _actualConnection.NodeA.transform.position).normalized ==
-                                new Vector3(0.5f, 0.0f, -0.5f))
+                            else if ((Vector3.Dot((_actualConnection.NodeB.transform.position - _actualConnection.NodeA.transform.position).normalized, Vector3.forward) >= 0.5f) &&
+                                (Vector3.Dot((_actualConnection.NodeB.transform.position - _actualConnection.NodeA.transform.position).normalized, Vector3.right) >= 0.5f))
                             {
                                 _actualConnection.connectionType = ConnectionDirection.LEFT_DIAGONAL;
+                            }
+                            else if ((Vector3.Dot((_actualConnection.NodeB.transform.position - _actualConnection.NodeA.transform.position).normalized, Vector3.forward) <= -0.5f) &&
+                                (Vector3.Dot((_actualConnection.NodeB.transform.position - _actualConnection.NodeA.transform.position).normalized, Vector3.right) >= 0.5f))
+                            {
+                                _actualConnection.connectionType = ConnectionDirection.RIGHT_DIAGONAL;
                             }
                             else
                             {
