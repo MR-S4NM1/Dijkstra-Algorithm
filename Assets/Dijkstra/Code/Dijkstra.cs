@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Collections;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace MrSanmi.DijkstraAlgorithm
 {
@@ -30,7 +31,19 @@ namespace MrSanmi.DijkstraAlgorithm
         [Space]
         [SerializeField] public GameObject connectionPrefab;
         [SerializeField] public List<Connection> connections;
+
+        [Space]
+        [SerializeField] public List<Route> allRoutesList;
+        [SerializeField] public List<Route> usefulRoutesList;
     }
+
+    [System.Serializable]
+    public struct Route
+    {
+        [SerializeField] public float totalDistance;
+        [SerializeField] public List<Node> nodesOfThisRoute;
+    }
+
     public class Dijkstra : MonoBehaviour
     {
         #region References
@@ -62,6 +75,7 @@ namespace MrSanmi.DijkstraAlgorithm
         protected GameObject _tempConnection;
         protected RaycastHit _currentHit;
         protected bool _containsNode;
+        protected Route actualRoute;
 
         #endregion
 
@@ -510,6 +524,46 @@ namespace MrSanmi.DijkstraAlgorithm
                         }
                     }
                 }
+            }
+        }
+
+        public void RecursivitySearch(Route p_previousRoute, Node p_node, float distance)
+        {
+            if (p_node == _internalData.endNode)
+            {
+                actualRoute = new Route();
+                actualRoute.nodesOfThisRoute = new List<Node>(p_previousRoute.nodesOfThisRoute);
+                actualRoute.totalDistance = p_previousRoute.totalDistance + distance;
+                actualRoute.nodesOfThisRoute.Add(_internalData.endNode);
+                _internalData.allRoutesList.Add(actualRoute);
+                _internalData.usefulRoutesList.Add(actualRoute);
+                return; //Recursitivity breaker
+            }
+            if (p_previousRoute.nodesOfThisRoute.Contains(p_node))
+            {
+                return; //Recursitivity breaker
+            }
+            //The node survived both conditions, so it is a candidate for a truncated route
+            actualRoute = new Route();
+            actualRoute.nodesOfThisRoute = new List<Node>(p_previousRoute.nodesOfThisRoute);
+            actualRoute.totalDistance = p_previousRoute.totalDistance + distance;
+            actualRoute.nodesOfThisRoute.Add(_internalData.endNode);
+            _internalData.allRoutesList.Add(actualRoute);
+            foreach (Connection connection in p_node.Connections)
+            {
+                RecursivitySearch(actualRoute, connection.OtherNode(p_node), connection.DistanceBetweenNodes);
+            }
+        }
+
+        public void SearchAllTheRoutes()
+        {
+            if(_internalData.allRoutesList.Count == 0)
+            {
+                actualRoute = new Route();
+                //actualRoute.nodesOfThisRoute.Add(_internalData.startNode);
+                //actualRoute.totalDistance = 0.0f;
+                //_internalData.allRoutesList.Add(actualRoute);
+                RecursivitySearch(_internalData.allRoutesList[0], _internalData.startNode, 0f);
             }
         }
 
