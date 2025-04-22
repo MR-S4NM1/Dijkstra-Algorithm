@@ -36,6 +36,10 @@ namespace MrSanmi.DijkstraAlgorithm
             {
                 _dijkstra.SearchAllTheRoutes();
             }
+            if(GUILayout.Button("Get The Best Route"))
+            {
+                _dijkstra.LookForTheBestRoute();
+            }
         }
     }
 

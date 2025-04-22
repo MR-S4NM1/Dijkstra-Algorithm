@@ -77,6 +77,8 @@ namespace MrSanmi.DijkstraAlgorithm
         protected RaycastHit _currentHit;
         protected bool _containsNode;
         //protected Route actualRoute;
+        [SerializeField] protected float minDistance;
+        [SerializeField] protected int index;
 
         #endregion
 
@@ -541,8 +543,12 @@ namespace MrSanmi.DijkstraAlgorithm
                     totalDistance = (p_previousRoute.totalDistance + distance)
                 };
                 usefulRoute.nodesOfThisRoute.Add(_internalData.endNode);
-                _internalData.allRoutesList.Add(usefulRoute);
-                _internalData.usefulRoutesList.Add(usefulRoute);
+
+                if (!_internalData.allRoutesList.Contains(usefulRoute))
+                {
+                    _internalData.allRoutesList.Add(usefulRoute);
+                    _internalData.usefulRoutesList.Add(usefulRoute);
+                }
                 return; //Recursitivity breaker
             }
 
@@ -560,8 +566,12 @@ namespace MrSanmi.DijkstraAlgorithm
                 nodesOfThisRoute = new List<Node>(p_previousRoute.nodesOfThisRoute),
                 totalDistance = p_previousRoute.totalDistance + distance
             };
-            actualRoute.nodesOfThisRoute.Add(p_node);
-            _internalData.allRoutesList.Add(actualRoute);
+
+            if (!_internalData.allRoutesList.Contains(actualRoute))
+            {
+                actualRoute.nodesOfThisRoute.Add(p_node);
+                _internalData.allRoutesList.Add(actualRoute);
+            }
 
             foreach (Connection connection in p_node.Connections)
             {
@@ -589,6 +599,22 @@ namespace MrSanmi.DijkstraAlgorithm
                     RecursivitySearch(initialRoute, connection.OtherNode(_internalData.startNode), 0f);
                 }
             }
+        }
+
+        public void LookForTheBestRoute()
+        {
+            for (int i = 0; i < _internalData.usefulRoutesList.Count; i++)
+            {
+                minDistance = Mathf.Infinity;
+                index = 0;
+
+                if (_internalData.usefulRoutesList[i].totalDistance < minDistance)
+                {
+                    minDistance = _internalData.usefulRoutesList[i].totalDistance;
+                    index = _internalData.usefulRoutesList.IndexOf(_internalData.usefulRoutesList[i]);
+                    Debug.Log($"The shortest distance is: {minDistance} - It has the index: {index}"); 
+                }
+            } 
         }
 
         #endregion
