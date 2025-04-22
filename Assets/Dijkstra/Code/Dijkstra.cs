@@ -603,11 +603,11 @@ namespace MrSanmi.DijkstraAlgorithm
 
         public void LookForTheBestRoute()
         {
+            minDistance = Mathf.Infinity;
+            index = 0;
+
             for (int i = 0; i < _internalData.usefulRoutesList.Count; i++)
             {
-                minDistance = Mathf.Infinity;
-                index = 0;
-
                 if (_internalData.usefulRoutesList[i].totalDistance < minDistance)
                 {
                     minDistance = _internalData.usefulRoutesList[i].totalDistance;
