@@ -32,7 +32,10 @@ namespace MrSanmi.DijkstraAlgorithm
             {
                 _dijkstra.ReduceNodes();
             }
-
+            if(GUILayout.Button("Search Routes"))
+            {
+                _dijkstra.SearchAllTheRoutes();
+            }
         }
     }
 

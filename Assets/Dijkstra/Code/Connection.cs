@@ -77,11 +77,11 @@ namespace MrSanmi.DijkstraAlgorithm
             {
                 if (value == _internalData.nodeA)
                 {
-                    return _internalData.nodeA;
+                    return _internalData.nodeB;
                 }
                 else
                 {
-                    return _internalData.nodeB;
+                    return _internalData.nodeA;
                 }
             }
             Debug.LogError($" {this.name} {gameObject.name} - Node {value.name} is asking for a connection " +

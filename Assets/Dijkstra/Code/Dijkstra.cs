@@ -3,6 +3,7 @@ using System.Collections;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Rendering;
+using Unity.VisualScripting;
 
 namespace MrSanmi.DijkstraAlgorithm
 {
@@ -75,7 +76,7 @@ namespace MrSanmi.DijkstraAlgorithm
         protected GameObject _tempConnection;
         protected RaycastHit _currentHit;
         protected bool _containsNode;
-        protected Route actualRoute;
+        //protected Route actualRoute;
 
         #endregion
 
@@ -155,6 +156,9 @@ namespace MrSanmi.DijkstraAlgorithm
                 DestroyImmediate(connection.gameObject);
             }
             _internalData.connections.Clear();
+
+            _internalData.allRoutesList.Clear();
+            _internalData.usefulRoutesList.Clear();
         }
 
         public void GenerateGraph()
@@ -527,31 +531,44 @@ namespace MrSanmi.DijkstraAlgorithm
             }
         }
 
-        public void RecursivitySearch(Route p_previousRoute, Node p_node, float distance)
+        protected void RecursivitySearch(Route p_previousRoute, Node p_node, float distance)
         {
             if (p_node == _internalData.endNode)
             {
-                actualRoute = new Route();
-                actualRoute.nodesOfThisRoute = new List<Node>(p_previousRoute.nodesOfThisRoute);
-                actualRoute.totalDistance = p_previousRoute.totalDistance + distance;
-                actualRoute.nodesOfThisRoute.Add(_internalData.endNode);
-                _internalData.allRoutesList.Add(actualRoute);
-                _internalData.usefulRoutesList.Add(actualRoute);
+                Route usefulRoute = new Route()
+                {
+                    nodesOfThisRoute = new List<Node>(p_previousRoute.nodesOfThisRoute),
+                    totalDistance = (p_previousRoute.totalDistance + distance)
+                };
+                usefulRoute.nodesOfThisRoute.Add(_internalData.endNode);
+                _internalData.allRoutesList.Add(usefulRoute);
+                _internalData.usefulRoutesList.Add(usefulRoute);
                 return; //Recursitivity breaker
             }
+
+            //Debug.Log($"Ahhhh - {p_node == null} - {p_node.gameObject.name}");
+
             if (p_previousRoute.nodesOfThisRoute.Contains(p_node))
             {
                 return; //Recursitivity breaker
             }
+
             //The node survived both conditions, so it is a candidate for a truncated route
-            actualRoute = new Route();
-            actualRoute.nodesOfThisRoute = new List<Node>(p_previousRoute.nodesOfThisRoute);
-            actualRoute.totalDistance = p_previousRoute.totalDistance + distance;
-            actualRoute.nodesOfThisRoute.Add(_internalData.endNode);
+
+            Route actualRoute = new Route()
+            {
+                nodesOfThisRoute = new List<Node>(p_previousRoute.nodesOfThisRoute),
+                totalDistance = p_previousRoute.totalDistance + distance
+            };
+            actualRoute.nodesOfThisRoute.Add(p_node);
             _internalData.allRoutesList.Add(actualRoute);
+
             foreach (Connection connection in p_node.Connections)
             {
-                RecursivitySearch(actualRoute, connection.OtherNode(p_node), connection.DistanceBetweenNodes);
+                if ((connection != null) && (connection.OtherNode(p_node) != null))
+                {
+                    RecursivitySearch(actualRoute, connection.OtherNode(p_node), connection.DistanceBetweenNodes);
+                }
             }
         }
 
@@ -559,11 +576,18 @@ namespace MrSanmi.DijkstraAlgorithm
         {
             if(_internalData.allRoutesList.Count == 0)
             {
-                actualRoute = new Route();
-                //actualRoute.nodesOfThisRoute.Add(_internalData.startNode);
-                //actualRoute.totalDistance = 0.0f;
-                //_internalData.allRoutesList.Add(actualRoute);
-                RecursivitySearch(_internalData.allRoutesList[0], _internalData.startNode, 0f);
+                Route initialRoute = new Route()
+                {
+                    nodesOfThisRoute = new List<Node>(),
+                    totalDistance = 0.0f
+                };
+                initialRoute.nodesOfThisRoute.Add(_internalData.startNode);
+                _internalData.allRoutesList.Add(initialRoute); 
+
+                foreach(Connection connection in _internalData.startNode.Connections)
+                {
+                    RecursivitySearch(initialRoute, connection.OtherNode(_internalData.startNode), 0f);
+                }
             }
         }
 
