@@ -289,7 +289,7 @@ namespace MrSanmi.DijkstraAlgorithm
         {
             foreach(Node node in _internalData.nodes)
             {
-                if (node.nodeState == NodeStates.HABILITADO)
+                if (node.nodeState == NodeStates.HABILITADO && node.gameObject.activeInHierarchy)
                 {
                     if (node.Connections.Count == 2)
                     {
@@ -301,12 +301,19 @@ namespace MrSanmi.DijkstraAlgorithm
                             if (node.Connections[0].IsNodeA(node))
                             {
                                 _actualConnection.NodeA = node.Connections[0].NodeB;
-                                _actualConnection.NodeB = node.Connections[1].NodeA;
                             }
                             else
                             {
                                 _actualConnection.NodeA = node.Connections[0].NodeA;
+                            }
+
+                            if (node.Connections[1].IsNodeA(node))
+                            {
                                 _actualConnection.NodeB = node.Connections[1].NodeB;
+                            }
+                            else
+                            {
+                                _actualConnection.NodeB = node.Connections[1].NodeA;
                             }
 
                             _actualConnection.DistanceBetweenNodes = (_actualConnection.NodeB.transform.position -
@@ -315,13 +322,15 @@ namespace MrSanmi.DijkstraAlgorithm
                             _actualConnection.gameObject.transform.SetParent(this.gameObject.transform.GetChild(1), true);
 
                             #region NewConnectionDirection
-                            if ((_actualConnection.NodeB.transform.position - _actualConnection.NodeA.transform.position).normalized ==
-                                Vector3.forward)
+                            if (((_actualConnection.NodeB.transform.position - _actualConnection.NodeA.transform.position).normalized ==
+                                Vector3.forward) || ((_actualConnection.NodeB.transform.position - _actualConnection.NodeA.transform.position).normalized ==
+                                -Vector3.forward))
                             {
                                 _actualConnection.connectionType = ConnectionDirection.HORIZONTAL;
                             }
-                            else if ((_actualConnection.NodeB.transform.position - _actualConnection.NodeA.transform.position).normalized ==
-                                Vector3.right)
+                            else if (((_actualConnection.NodeB.transform.position - _actualConnection.NodeA.transform.position).normalized ==
+                                Vector3.right) || ((_actualConnection.NodeB.transform.position - _actualConnection.NodeA.transform.position).normalized ==
+                                Vector3.left)) 
                             {
                                 _actualConnection.connectionType = ConnectionDirection.VERTICAL;
                             }
@@ -332,7 +341,7 @@ namespace MrSanmi.DijkstraAlgorithm
                             }
                             else if ((Vector3.Dot((_actualConnection.NodeB.transform.position - _actualConnection.NodeA.transform.position).normalized, Vector3.forward) <= -0.5f) &&
                                 (Vector3.Dot((_actualConnection.NodeB.transform.position - _actualConnection.NodeA.transform.position).normalized, Vector3.right) >= 0.5f))
-                            {
+                            { 
                                 _actualConnection.connectionType = ConnectionDirection.RIGHT_DIAGONAL;
                             }
                             else
@@ -341,17 +350,24 @@ namespace MrSanmi.DijkstraAlgorithm
                             }
                             #endregion
 
-                            node.nodeState = NodeStates.DESHABILITADO;
-                            node.gameObject.SetActive(false);
+
+                            node.Connections[0].gameObject.SetActive(false);
+                            node.Connections[1].gameObject.SetActive(false);
+
                             _internalData.connections.Remove(node.Connections[0]);
                             _internalData.connections.Remove(node.Connections[1]);
+
+                            _actualConnection.NodeA.Connections.Remove(node.Connections[0]); 
+                            _actualConnection.NodeB.Connections.Remove(node.Connections[1]);
+
+                             
                             _internalData.connections.Add(_actualConnection);
 
                             _actualConnection.NodeA.Connections.Add(_actualConnection);
                             _actualConnection.NodeB.Connections.Add(_actualConnection);
-
-                            DestroyImmediate(node.Connections[1].gameObject);
-                            DestroyImmediate(node.Connections[0].gameObject);
+                            
+                            node.nodeState = NodeStates.DESHABILITADO;
+                            node.gameObject.SetActive(false); 
                         }
                         _actualConnection.NodeA.Connections.RemoveAll(item => item == null);
                         _actualConnection.NodeB.Connections.RemoveAll(item => item == null);
@@ -383,12 +399,19 @@ namespace MrSanmi.DijkstraAlgorithm
                                                 if (_actualConnectionA.IsNodeA(node))
                                                 {
                                                     _actualConnection.NodeA = _actualConnectionA.NodeB;
-                                                    _actualConnection.NodeB = _actualConnectionB.NodeA;
                                                 }
                                                 else
                                                 {
                                                     _actualConnection.NodeA = _actualConnectionA.NodeA;
+                                                }
+
+                                                if (_actualConnectionB.IsNodeA(node))
+                                                {
                                                     _actualConnection.NodeB = _actualConnectionB.NodeB;
+                                                }
+                                                else
+                                                {
+                                                    _actualConnection.NodeB = _actualConnectionA.NodeA;
                                                 }
 
                                                 _actualConnection.DistanceBetweenNodes = (_actualConnection.NodeB.transform.position -
@@ -400,7 +423,7 @@ namespace MrSanmi.DijkstraAlgorithm
 
                                                 _internalData.connections.Remove(node.Connections[j]);
                                                 _internalData.connections.Add(_actualConnection);
-
+                                                 
                                                 _actualConnection.NodeA.Connections.Add(_actualConnection);
                                                 _actualConnection.NodeB.Connections.Add(_actualConnection);
 
@@ -420,12 +443,19 @@ namespace MrSanmi.DijkstraAlgorithm
                                                 if (_actualConnectionA.IsNodeA(node))
                                                 {
                                                     _actualConnection.NodeA = _actualConnectionA.NodeB;
-                                                    _actualConnection.NodeB = _actualConnectionB.NodeA;
                                                 }
                                                 else
                                                 {
                                                     _actualConnection.NodeA = _actualConnectionA.NodeA;
+                                                }
+
+                                                if (_actualConnectionB.IsNodeA(node))
+                                                {
                                                     _actualConnection.NodeB = _actualConnectionB.NodeB;
+                                                }
+                                                else
+                                                {
+                                                    _actualConnection.NodeB = _actualConnectionA.NodeA;
                                                 }
 
                                                 _actualConnection.DistanceBetweenNodes = (_actualConnection.NodeB.transform.position -
@@ -457,12 +487,19 @@ namespace MrSanmi.DijkstraAlgorithm
                                                 if (_actualConnectionA.IsNodeA(node))
                                                 {
                                                     _actualConnection.NodeA = _actualConnectionA.NodeB;
-                                                    _actualConnection.NodeB = _actualConnectionB.NodeA;
                                                 }
                                                 else
                                                 {
                                                     _actualConnection.NodeA = _actualConnectionA.NodeA;
+                                                }
+
+                                                if (_actualConnectionB.IsNodeA(node))
+                                                {
                                                     _actualConnection.NodeB = _actualConnectionB.NodeB;
+                                                }
+                                                else
+                                                {
+                                                    _actualConnection.NodeB = _actualConnectionA.NodeA;
                                                 }
 
                                                 _actualConnection.DistanceBetweenNodes = (_actualConnection.NodeB.transform.position -
@@ -494,12 +531,19 @@ namespace MrSanmi.DijkstraAlgorithm
                                                 if (_actualConnectionA.IsNodeA(node))
                                                 {
                                                     _actualConnection.NodeA = _actualConnectionA.NodeB;
-                                                    _actualConnection.NodeB = _actualConnectionB.NodeA;
                                                 }
                                                 else
                                                 {
                                                     _actualConnection.NodeA = _actualConnectionA.NodeA;
+                                                }
+
+                                                if (_actualConnectionB.IsNodeA(node))
+                                                {
                                                     _actualConnection.NodeB = _actualConnectionB.NodeB;
+                                                }
+                                                else
+                                                {
+                                                    _actualConnection.NodeB = _actualConnectionA.NodeA;
                                                 }
 
                                                 _actualConnection.DistanceBetweenNodes = (_actualConnection.NodeB.transform.position -
