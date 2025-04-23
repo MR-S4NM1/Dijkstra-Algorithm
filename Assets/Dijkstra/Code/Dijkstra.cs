@@ -221,19 +221,21 @@ namespace MrSanmi.DijkstraAlgorithm
                                                         _internalData.nodes[j].Connections.Add(_actualConnection);
                                                         _internalData.connections.Add(_actualConnection);
 
-                                                        if ((_internalData.nodes[j].transform.position - node.transform.position).normalized ==
-                                                            Vector3.forward)
+                                                        if (((_internalData.nodes[j].transform.position - node.transform.position).normalized ==
+                                                            Vector3.forward) || ((_internalData.nodes[j].transform.position - node.transform.position).normalized ==
+                                                            -Vector3.forward))
                                                         {
                                                             _actualConnection.connectionType = ConnectionDirection.HORIZONTAL;
                                                         }
-                                                        else if ((_internalData.nodes[j].transform.position - node.transform.position).normalized ==
-                                                            Vector3.right)
+                                                        else if (((_internalData.nodes[j].transform.position - node.transform.position).normalized ==
+                                                            Vector3.right) || ((_internalData.nodes[j].transform.position - node.transform.position).normalized ==
+                                                            Vector3.left))
                                                         {
                                                             _actualConnection.connectionType = ConnectionDirection.VERTICAL;
                                                         }
                                                         else if ((Vector3.Dot((_internalData.nodes[j].transform.position - node.transform.position).normalized, Vector3.forward) >= 0.5f) &&
                                                             (Vector3.Dot((_internalData.nodes[j].transform.position - node.transform.position).normalized, Vector3.right) >= 0.5f))
-                                                        {
+                                                        { 
                                                             _actualConnection.connectionType = ConnectionDirection.LEFT_DIAGONAL;
                                                         }
                                                         else if ((Vector3.Dot((_internalData.nodes[j].transform.position - node.transform.position).normalized, Vector3.forward) <= -0.5f) &&
@@ -321,40 +323,12 @@ namespace MrSanmi.DijkstraAlgorithm
 
                             _actualConnection.gameObject.transform.SetParent(this.gameObject.transform.GetChild(1), true);
 
-                            #region NewConnectionDirection
-                            if (((_actualConnection.NodeB.transform.position - _actualConnection.NodeA.transform.position).normalized ==
-                                Vector3.forward) || ((_actualConnection.NodeB.transform.position - _actualConnection.NodeA.transform.position).normalized ==
-                                -Vector3.forward))
-                            {
-                                _actualConnection.connectionType = ConnectionDirection.HORIZONTAL;
-                            }
-                            else if (((_actualConnection.NodeB.transform.position - _actualConnection.NodeA.transform.position).normalized ==
-                                Vector3.right) || ((_actualConnection.NodeB.transform.position - _actualConnection.NodeA.transform.position).normalized ==
-                                Vector3.left)) 
-                            {
-                                _actualConnection.connectionType = ConnectionDirection.VERTICAL;
-                            }
-                            else if ((Vector3.Dot((_actualConnection.NodeB.transform.position - _actualConnection.NodeA.transform.position).normalized, Vector3.forward) >= 0.5f) &&
-                                (Vector3.Dot((_actualConnection.NodeB.transform.position - _actualConnection.NodeA.transform.position).normalized, Vector3.right) >= 0.5f))
-                            {
-                                _actualConnection.connectionType = ConnectionDirection.LEFT_DIAGONAL;
-                            }
-                            else if ((Vector3.Dot((_actualConnection.NodeB.transform.position - _actualConnection.NodeA.transform.position).normalized, Vector3.forward) <= -0.5f) &&
-                                (Vector3.Dot((_actualConnection.NodeB.transform.position - _actualConnection.NodeA.transform.position).normalized, Vector3.right) >= 0.5f))
-                            { 
-                                _actualConnection.connectionType = ConnectionDirection.RIGHT_DIAGONAL;
-                            }
-                            else
-                            {
-                                _actualConnection.connectionType = ConnectionDirection.IRREGULAR_DIAGONAL;
-                            }
-                            #endregion
-
+                            _actualConnection.connectionType = node.Connections[0].connectionType;
 
                             node.Connections[0].gameObject.SetActive(false);
                             node.Connections[1].gameObject.SetActive(false);
 
-                            _internalData.connections.Remove(node.Connections[0]);
+                            _internalData.connections.Remove(node.Connections[0]); 
                             _internalData.connections.Remove(node.Connections[1]);
 
                             _actualConnection.NodeA.Connections.Remove(node.Connections[0]); 
@@ -376,19 +350,18 @@ namespace MrSanmi.DijkstraAlgorithm
                     {
                         foreach (Connection connectionA in node.Connections)
                         {
-                            if (connectionA != null)
+                            if (connectionA != null && connectionA.gameObject.activeInHierarchy)
                             {
                                 _actualConnectionA = connectionA;
                                 for (int j = 0; j < node.Connections.Count; ++j)
                                 {
-                                    if (node.Connections[j] != null)
+                                    if (node.Connections[j] != null && node.Connections[j].gameObject.activeInHierarchy)
                                     {
                                         _actualConnectionB = node.Connections[j];
 
                                         if (_actualConnectionA != _actualConnectionB)
                                         {
-                                            if ((_actualConnectionA.connectionType == ConnectionDirection.HORIZONTAL) &&
-                                                (_actualConnectionB.connectionType == ConnectionDirection.HORIZONTAL))
+                                            if (_actualConnectionA.connectionType == _actualConnectionB.connectionType)
                                             {
 
                                                 Debug.Log($"{_actualConnectionA.gameObject.name} ({_actualConnectionA.gameObject.transform.position}) - " +
@@ -411,7 +384,7 @@ namespace MrSanmi.DijkstraAlgorithm
                                                 }
                                                 else
                                                 {
-                                                    _actualConnection.NodeB = _actualConnectionA.NodeA;
+                                                    _actualConnection.NodeB = _actualConnectionB.NodeA;
                                                 }
 
                                                 _actualConnection.DistanceBetweenNodes = (_actualConnection.NodeB.transform.position -
@@ -419,149 +392,24 @@ namespace MrSanmi.DijkstraAlgorithm
 
                                                 _actualConnection.gameObject.transform.SetParent(this.gameObject.transform.GetChild(1), true);
 
-                                                _actualConnection.connectionType = ConnectionDirection.HORIZONTAL;
+                                                _actualConnection.connectionType = _actualConnectionA.connectionType;
 
-                                                _internalData.connections.Remove(node.Connections[j]);
-                                                _internalData.connections.Add(_actualConnection);
-                                                 
-                                                _actualConnection.NodeA.Connections.Add(_actualConnection);
-                                                _actualConnection.NodeB.Connections.Add(_actualConnection);
+                                                _actualConnection.NodeA.Connections.Remove(_actualConnectionA);
+                                                _actualConnection.NodeA.Connections.Remove(_actualConnectionB);
 
-                                                _internalData.connections.Remove(connectionA);
-                                                DestroyImmediate(connectionA.gameObject);
-                                                DestroyImmediate(node.Connections[j].gameObject);
-                                            }
-                                            else if ((_actualConnectionA.connectionType == ConnectionDirection.VERTICAL) &&
-                                                (_actualConnectionB.connectionType == ConnectionDirection.VERTICAL))
-                                            {
+                                                _actualConnection.NodeB.Connections.Remove(_actualConnectionA);
+                                                _actualConnection.NodeB.Connections.Remove(_actualConnectionB);
 
-                                                Debug.Log($"{_actualConnectionA.gameObject.name} ({_actualConnectionA.gameObject.transform.position}) - " +
-                                                    $"{_actualConnectionB.gameObject.name} - ({_actualConnectionB.gameObject.transform.position})");
-                                                _tempConnection = Instantiate(_internalData.connectionPrefab);
-                                                _actualConnection = _tempConnection.GetComponent<Connection>();
+                                                _actualConnectionA.gameObject.SetActive(false);
+                                                _actualConnectionB.gameObject.SetActive(false);
 
-                                                if (_actualConnectionA.IsNodeA(node))
-                                                {
-                                                    _actualConnection.NodeA = _actualConnectionA.NodeB;
-                                                }
-                                                else
-                                                {
-                                                    _actualConnection.NodeA = _actualConnectionA.NodeA;
-                                                }
+                                                _internalData.connections.Remove(_actualConnectionA);
+                                                _internalData.connections.Remove(_actualConnectionB);
 
-                                                if (_actualConnectionB.IsNodeA(node))
-                                                {
-                                                    _actualConnection.NodeB = _actualConnectionB.NodeB;
-                                                }
-                                                else
-                                                {
-                                                    _actualConnection.NodeB = _actualConnectionA.NodeA;
-                                                }
-
-                                                _actualConnection.DistanceBetweenNodes = (_actualConnection.NodeB.transform.position -
-                                                    _actualConnection.NodeA.transform.position).magnitude;
-
-                                                _actualConnection.gameObject.transform.SetParent(this.gameObject.transform.GetChild(1), true);
-
-                                                _actualConnection.connectionType = ConnectionDirection.VERTICAL;
-
-                                                _internalData.connections.Remove(node.Connections[j]);
                                                 _internalData.connections.Add(_actualConnection);
 
                                                 _actualConnection.NodeA.Connections.Add(_actualConnection);
                                                 _actualConnection.NodeB.Connections.Add(_actualConnection);
-
-                                                _internalData.connections.Remove(connectionA);
-                                                DestroyImmediate(connectionA.gameObject);
-                                                DestroyImmediate(node.Connections[j].gameObject);
-                                            }
-                                            else if ((_actualConnectionA.connectionType == ConnectionDirection.RIGHT_DIAGONAL) &&
-                                                (_actualConnectionB.connectionType == ConnectionDirection.RIGHT_DIAGONAL))
-                                            {
-
-                                                Debug.Log($"{_actualConnectionA.gameObject.name} ({_actualConnectionA.gameObject.transform.position}) - " +
-                                                    $"{_actualConnectionB.gameObject.name} - ({_actualConnectionB.gameObject.transform.position})");
-                                                _tempConnection = Instantiate(_internalData.connectionPrefab);
-                                                _actualConnection = _tempConnection.GetComponent<Connection>();
-
-                                                if (_actualConnectionA.IsNodeA(node))
-                                                {
-                                                    _actualConnection.NodeA = _actualConnectionA.NodeB;
-                                                }
-                                                else
-                                                {
-                                                    _actualConnection.NodeA = _actualConnectionA.NodeA;
-                                                }
-
-                                                if (_actualConnectionB.IsNodeA(node))
-                                                {
-                                                    _actualConnection.NodeB = _actualConnectionB.NodeB;
-                                                }
-                                                else
-                                                {
-                                                    _actualConnection.NodeB = _actualConnectionA.NodeA;
-                                                }
-
-                                                _actualConnection.DistanceBetweenNodes = (_actualConnection.NodeB.transform.position -
-                                                    _actualConnection.NodeA.transform.position).magnitude;
-
-                                                _actualConnection.gameObject.transform.SetParent(this.gameObject.transform.GetChild(1), true);
-
-                                                _actualConnection.connectionType = ConnectionDirection.RIGHT_DIAGONAL;
-
-                                                _internalData.connections.Remove(node.Connections[j]);
-                                                _internalData.connections.Add(_actualConnection);
-
-                                                _actualConnection.NodeA.Connections.Add(_actualConnection);
-                                                _actualConnection.NodeB.Connections.Add(_actualConnection);
-
-                                                _internalData.connections.Remove(connectionA);
-                                                DestroyImmediate(connectionA.gameObject);
-                                                DestroyImmediate(node.Connections[j].gameObject);
-                                            }
-                                            else if ((_actualConnectionA.connectionType == ConnectionDirection.LEFT_DIAGONAL) &&
-                                                (_actualConnectionB.connectionType == ConnectionDirection.LEFT_DIAGONAL))
-                                            {
-
-                                                Debug.Log($"{_actualConnectionA.gameObject.name} ({_actualConnectionA.gameObject.transform.position}) - " +
-                                                    $"{_actualConnectionB.gameObject.name} - ({_actualConnectionB.gameObject.transform.position})");
-                                                _tempConnection = Instantiate(_internalData.connectionPrefab);
-                                                _actualConnection = _tempConnection.GetComponent<Connection>();
-
-                                                if (_actualConnectionA.IsNodeA(node))
-                                                {
-                                                    _actualConnection.NodeA = _actualConnectionA.NodeB;
-                                                }
-                                                else
-                                                {
-                                                    _actualConnection.NodeA = _actualConnectionA.NodeA;
-                                                }
-
-                                                if (_actualConnectionB.IsNodeA(node))
-                                                {
-                                                    _actualConnection.NodeB = _actualConnectionB.NodeB;
-                                                }
-                                                else
-                                                {
-                                                    _actualConnection.NodeB = _actualConnectionA.NodeA;
-                                                }
-
-                                                _actualConnection.DistanceBetweenNodes = (_actualConnection.NodeB.transform.position -
-                                                    _actualConnection.NodeA.transform.position).magnitude;
-
-                                                _actualConnection.gameObject.transform.SetParent(this.gameObject.transform.GetChild(1), true);
-
-                                                _actualConnection.connectionType = ConnectionDirection.LEFT_DIAGONAL;
-
-                                                _internalData.connections.Remove(node.Connections[j]);
-                                                _internalData.connections.Add(_actualConnection);
-
-                                                _actualConnection.NodeA.Connections.Add(_actualConnection);
-                                                _actualConnection.NodeB.Connections.Add(_actualConnection);
-
-                                                _internalData.connections.Remove(connectionA);
-                                                DestroyImmediate(connectionA.gameObject);
-                                                DestroyImmediate(node.Connections[j].gameObject);
                                             }
                                             _actualConnection.NodeA.Connections.RemoveAll(item => item == null);
                                             _actualConnection.NodeB.Connections.RemoveAll(item => item == null);
