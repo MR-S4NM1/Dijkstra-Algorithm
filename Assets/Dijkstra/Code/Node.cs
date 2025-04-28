@@ -23,6 +23,16 @@ namespace MrSanmi.DijkstraAlgorithm
         {
             get { return connections; }
             set { connections = value; }
+        } 
+
+        public int InstanceID
+        {
+            get { return gameObject.GetInstanceID(); }
+        }
+
+        public GameObject GetNodeGO
+        {
+            get { return this.gameObject; }
         }
 
         #endregion

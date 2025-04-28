@@ -4,6 +4,7 @@ using System.Linq;
 using UnityEngine;
 using UnityEngine.Rendering;
 using Unity.VisualScripting;
+using TMPro;
 
 namespace MrSanmi.DijkstraAlgorithm
 {
@@ -17,32 +18,34 @@ namespace MrSanmi.DijkstraAlgorithm
     [System.Serializable]
     public struct DijkstraInternalData
     {
-        [SerializeField] public Transform startPosition;
-        [SerializeField] public Node startNode;
+        [SerializeField, HideInInspector] public Transform startPosition;
+        [SerializeField, HideInInspector] public Node startNode;
 
         [Space]
-        [SerializeField] public Transform endPosition;
-        [SerializeField] public Node endNode;
+        [SerializeField, HideInInspector] public Transform endPosition;
+        [SerializeField, HideInInspector] public Node endNode;
 
         [Space]
-        [SerializeField] public Transform pivot;
-        [SerializeField] public List<Node> nodes;
-        [SerializeField] public GameObject nodePrefab;
+        [SerializeField, HideInInspector] public Transform pivot;
+        [SerializeField, HideInInspector] public List<Node> nodes;
+        [SerializeField, HideInInspector] public GameObject nodePrefab;
 
         [Space]
-        [SerializeField] public GameObject connectionPrefab;
-        [SerializeField] public List<Connection> connections;
+        [SerializeField, HideInInspector] public GameObject connectionPrefab;
+        [SerializeField, HideInInspector] public List<Connection> connections;
 
         [Space]
-        [SerializeField] public List<Route> allRoutesList;
-        [SerializeField] public List<Route> usefulRoutesList;
+        [SerializeField, HideInInspector] public List<Route> allRoutesList;
+        [SerializeField, HideInInspector] public List<int> _totalNodesIDs;
+        [SerializeField, HideInInspector] public List<Route> usefulRoutesList; 
     }
 
     [System.Serializable]
     public struct Route
     {
-        [SerializeField] public float totalDistance;
-        [SerializeField] public List<Node> nodesOfThisRoute;
+        [SerializeField, HideInInspector] public float totalDistance;
+        //[SerializeField, HideInInspector] public List<Node> nodesOfThisRoute;
+        [SerializeField, HideInInspector] public List<int> nodesIDs;
     }
 
     public class Dijkstra : MonoBehaviour
@@ -55,12 +58,12 @@ namespace MrSanmi.DijkstraAlgorithm
         [SerializeField] protected DijkstraInternalData _internalData;
 
         [Header("Node Instance")]
-        [SerializeField] public GameObject nodeInstance;
+        [SerializeField, HideInInspector] public GameObject nodeInstance;
         #endregion
 
         #region Knobs
 
-        [SerializeField] protected LayerMask _layerMask;
+        [SerializeField, HideInInspector] protected LayerMask _layerMask;
 
         #endregion
 
@@ -77,15 +80,21 @@ namespace MrSanmi.DijkstraAlgorithm
         protected RaycastHit _currentHit;
         protected bool _containsNode;
         //protected Route actualRoute;
-        [SerializeField] protected float minDistance;
-        [SerializeField] protected int index;
+
+        protected float _nearestNodeDistance;
+
+        protected float minDistance;
+        protected int index;
+
+        protected Route _actualRoute;
+        protected Route _usefulRoute;
 
         #endregion
 
         #region EditorButtons
         public void SetIconToThisGameObject()
         {
-            IconManager.SetIcon(gameObject, IconManager.LabelIcon.Green);
+            IconManager.SetIcon(gameObject, IconManager.LabelIcon.Green); 
         }
 
         public void GenerateNodes()
@@ -103,6 +112,7 @@ namespace MrSanmi.DijkstraAlgorithm
                     nodeInstance = Instantiate(_internalData.nodePrefab);
                     actualNode = nodeInstance.GetComponent<Node>();
                     _internalData.nodes.Add(actualNode);
+                    _internalData._totalNodesIDs.Add(actualNode.InstanceID);
                     nodeInstance.transform.position = tempPos;
 
                     if (i == 0 && j == 0)
@@ -138,7 +148,7 @@ namespace MrSanmi.DijkstraAlgorithm
                 tempPos += new Vector3(_yOffset, 0.0f, 0.0f);
             }
 
-            _internalData.nodes.Add(_internalData.endNode);
+            //_internalData.nodes.Add(_internalData.endNode);
             actualNode = null;
         }
 
@@ -146,12 +156,13 @@ namespace MrSanmi.DijkstraAlgorithm
         {
             foreach (Node node in transform.GetChild(0).GetComponentsInChildren<Node>())
             {
-                if (!node.gameObject.CompareTag("FinalNode"))
-                {
+                //if (!node.gameObject.CompareTag("FinalNode"))
+                //{
                     DestroyImmediate(node.gameObject);
-                }
+                //}
             }
             _internalData.nodes.Clear();
+            _internalData._totalNodesIDs.Clear();
 
             foreach (Connection connection in transform.GetChild(1).GetComponentsInChildren<Connection>())
             {
@@ -174,8 +185,7 @@ namespace MrSanmi.DijkstraAlgorithm
                     Mathf.Pow(_yOffset, 2.0f)
                 );
 
-            foreach (Node node in _internalData.nodes)
-            {
+            foreach (Node node in _internalData.nodes){
                 if (node.nodeState == NodeStates.HABILITADO)
                 {
                     for(int j = 0; j < _internalData.nodes.Count; ++j)
@@ -285,13 +295,27 @@ namespace MrSanmi.DijkstraAlgorithm
                     }
                 }
             }
+
+            _nearestNodeDistance = Mathf.Infinity;
+
+            foreach (Node node in _internalData.nodes){
+                if (node.nodeState == NodeStates.HABILITADO){
+                    if (Vector3.Distance(node.gameObject.transform.position, _internalData.endPosition.position) < _nearestNodeDistance){
+                        _nearestNodeDistance = Vector3.Distance(node.gameObject.transform.position, _internalData.endPosition.position);
+                        _internalData.endNode = node;
+                    }
+                }
+            }
+
+            _internalData.endNode.gameObject.tag = "FinalNode";
         }
 
         public void ReduceNodes()
         {
             foreach(Node node in _internalData.nodes)
             {
-                if (node.nodeState == NodeStates.HABILITADO && node.gameObject.activeInHierarchy)
+                if ((node.nodeState == NodeStates.HABILITADO && node.gameObject.activeInHierarchy) 
+                    && !node.CompareTag("FinalNode"))
                 {
                     if (node.Connections.Count == 2)
                     {
@@ -363,9 +387,8 @@ namespace MrSanmi.DijkstraAlgorithm
                                         {
                                             if (_actualConnectionA.connectionType == _actualConnectionB.connectionType)
                                             {
-
-                                                Debug.Log($"{_actualConnectionA.gameObject.name} ({_actualConnectionA.gameObject.transform.position}) - " +
-                                                    $"{_actualConnectionB.gameObject.name} - ({_actualConnectionB.gameObject.transform.position})");
+                                                //Debug.Log($"{_actualConnectionA.gameObject.name} ({_actualConnectionA.gameObject.transform.position}) - " +
+                                                //    $"{_actualConnectionB.gameObject.name} - ({_actualConnectionB.gameObject.transform.position})");
                                                 _tempConnection = Instantiate(_internalData.connectionPrefab);
                                                 _actualConnection = _tempConnection.GetComponent<Connection>();
 
@@ -425,71 +448,129 @@ namespace MrSanmi.DijkstraAlgorithm
             }
         }
 
-        protected void RecursivitySearch(Route p_previousRoute, Node p_node, float distance)
+        protected void RecursivitySearch(Route p_previousRoute, /*Node p_node,*/ int p_nodeID, float distance)
         {
-            if (p_node == _internalData.endNode)
-            {
-                Route usefulRoute = new Route()
-                {
-                    nodesOfThisRoute = new List<Node>(p_previousRoute.nodesOfThisRoute),
-                    totalDistance = (p_previousRoute.totalDistance + distance)
-                };
-                usefulRoute.nodesOfThisRoute.Add(_internalData.endNode);
+            #region FirstSolution
+            //if (!p_previousRoute.nodesOfThisRoute.Contains(p_node))
+            //{
+            //    if (p_node == _internalData.endNode)
+            //    {
+            //        Route usefulRoute = new Route()
+            //        {
+            //            nodesOfThisRoute = new List<Node>(p_previousRoute.nodesOfThisRoute),
+            //            totalDistance = (p_previousRoute.totalDistance + distance)
+            //        };
+            //        usefulRoute.nodesOfThisRoute.Add(_internalData.endNode);
 
-                if (!_internalData.allRoutesList.Contains(usefulRoute))
+            //        _internalData.allRoutesList.Add(usefulRoute);
+            //        _internalData.usefulRoutesList.Add(usefulRoute);
+            //        return; //Recursitivity breaker
+            //    }
+
+            //    //Debug.Log($"Ahhhh - {p_node == null} - {p_node.gameObject.name}");
+
+            //    if (p_previousRoute.nodesOfThisRoute.Contains(p_node))
+            //    {
+            //        return; //Recursitivity breaker
+            //    }
+
+            //    //The node survived both conditions, so it is a candidate for a truncated route
+
+            //    Route actualRoute = new Route()
+            //    {
+            //        nodesOfThisRoute = new List<Node>(p_previousRoute.nodesOfThisRoute),
+            //        totalDistance = p_previousRoute.totalDistance + distance
+            //    };
+
+            //    actualRoute.nodesOfThisRoute.Add(p_node);
+            //    _internalData.allRoutesList.Add(actualRoute);
+
+            //    foreach (Connection connection in p_node.Connections)
+            //    {
+            //        if ((connection != null) && (connection.OtherNode(p_node) != null))
+            //        {
+            //            RecursivitySearch(actualRoute, connection.OtherNode(p_node), connection.DistanceBetweenNodes);
+            //        }
+            //    }
+            //}
+            #endregion
+
+            #region SecondSolution
+            if (!p_previousRoute.nodesIDs.Contains(p_nodeID))
+            {
+                if (p_nodeID == _internalData.endNode.InstanceID)
                 {
+                    Route usefulRoute = new Route()
+                    {
+                        //nodesOfThisRoute = new List<Node>(p_previousRoute.nodesOfThisRoute),
+                        nodesIDs = new List<int>(p_previousRoute.nodesIDs),
+                        totalDistance = (p_previousRoute.totalDistance + distance)
+                    };
+                    usefulRoute.nodesIDs.Add(_internalData.endNode.InstanceID);
+
                     _internalData.allRoutesList.Add(usefulRoute);
                     _internalData.usefulRoutesList.Add(usefulRoute);
+                    return; //Recursitivity breaker
                 }
-                return; //Recursitivity breaker
-            }
 
-            //Debug.Log($"Ahhhh - {p_node == null} - {p_node.gameObject.name}");
+                //Debug.Log($"Ahhhh - {p_node == null} - {p_node.gameObject.name}");
 
-            if (p_previousRoute.nodesOfThisRoute.Contains(p_node))
-            {
-                return; //Recursitivity breaker
-            }
-
-            //The node survived both conditions, so it is a candidate for a truncated route
-
-            Route actualRoute = new Route()
-            {
-                nodesOfThisRoute = new List<Node>(p_previousRoute.nodesOfThisRoute),
-                totalDistance = p_previousRoute.totalDistance + distance
-            };
-
-            if (!_internalData.allRoutesList.Contains(actualRoute))
-            {
-                actualRoute.nodesOfThisRoute.Add(p_node);
-                _internalData.allRoutesList.Add(actualRoute);
-            }
-
-            foreach (Connection connection in p_node.Connections)
-            {
-                if ((connection != null) && (connection.OtherNode(p_node) != null))
+                if (p_previousRoute.nodesIDs.Contains(p_nodeID))
                 {
-                    RecursivitySearch(actualRoute, connection.OtherNode(p_node), connection.DistanceBetweenNodes);
+                    return; //Recursitivity breaker
+                }
+
+                //The node survived both conditions, so it is a candidate for a truncated route
+
+                Route actualRoute = new Route()
+                {
+                    nodesIDs = new List<int>(p_previousRoute.nodesIDs),
+                    totalDistance = p_previousRoute.totalDistance + distance
+                };
+
+                actualRoute.nodesIDs.Add(p_nodeID);
+                _internalData.allRoutesList.Add(actualRoute);
+
+                foreach (Connection connection in GetNode(p_nodeID).Connections)
+                {
+                    if ((connection != null) && (connection.OtherNode(GetNode(p_nodeID)) != null))
+                    {
+                        RecursivitySearch(actualRoute, connection.OtherNodeID(GetNode(p_nodeID)),
+                            connection.DistanceBetweenNodes);
+                    }
                 }
             }
+            #endregion
         }
 
         public void SearchAllTheRoutes()
         {
             if(_internalData.allRoutesList.Count == 0)
             {
+                //Route initialRoute = new Route()
+                //{
+                //    nodesOfThisRoute = new List<Node>(),
+                //    totalDistance = 0.0f
+                //};
+                //initialRoute.nodesOfThisRoute.Add(_internalData.startNode);
+
                 Route initialRoute = new Route()
                 {
-                    nodesOfThisRoute = new List<Node>(),
+                    nodesIDs = new List<int>(),
                     totalDistance = 0.0f
                 };
-                initialRoute.nodesOfThisRoute.Add(_internalData.startNode);
-                _internalData.allRoutesList.Add(initialRoute); 
+                initialRoute.nodesIDs.Add(_internalData.startNode.InstanceID);
+
+                _internalData.allRoutesList.Add(initialRoute);
 
                 foreach(Connection connection in _internalData.startNode.Connections)
                 {
-                    RecursivitySearch(initialRoute, connection.OtherNode(_internalData.startNode), 0f);
+                    RecursivitySearch(initialRoute, connection.OtherNodeID(_internalData.startNode), 0f);
+                    //RecursivitySearch(initialRoute, connection.OtherNode(_internalData.startNode), 0f);
                 }
+
+                Debug.Log($"Number of Routes: { _internalData.allRoutesList.Count }");
+                Debug.Log($"Number of Useful Routes: {_internalData.usefulRoutesList.Count}");
             }
         }
 
@@ -504,14 +585,35 @@ namespace MrSanmi.DijkstraAlgorithm
                 {
                     minDistance = _internalData.usefulRoutesList[i].totalDistance;
                     index = _internalData.usefulRoutesList.IndexOf(_internalData.usefulRoutesList[i]);
-                    Debug.Log($"The shortest distance is: {minDistance} - It has the index: {index}"); 
                 }
-            } 
+            }
+
+            Debug.Log($"The shortest distance is: {minDistance} - It has the index: {index}");
         }
 
         #endregion
 
         #region LocalMethods
+
+        #endregion
+
+        #region GetNodeGO
+
+        public Node GetNode(int index)
+        {
+            Node nodeInstance = null;
+
+            foreach (Node node in _internalData.nodes)
+            {
+                if (node.InstanceID == index)
+                {
+                    nodeInstance = node;
+                    break;
+                }
+            }
+
+            return nodeInstance;
+        }
 
         #endregion
     }

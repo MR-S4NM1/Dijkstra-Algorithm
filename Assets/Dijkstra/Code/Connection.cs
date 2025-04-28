@@ -6,17 +6,17 @@ namespace MrSanmi.DijkstraAlgorithm
     [System.Serializable]
     public struct ConnectionInternalData
     {
-        [SerializeField] public Node nodeA;
-        [SerializeField] public Node nodeB;
-        [SerializeField] public float distanceBetweenNodes;
+        [SerializeField, HideInInspector] public Node nodeA;
+        [SerializeField, HideInInspector] public Node nodeB;
+        [SerializeField, HideInInspector] public float distanceBetweenNodes;
     }
 
     [System.Serializable]
     public struct ConnectionDebug
     {
-        [SerializeField] public GameObject _debugNodeA;
-        [SerializeField] public GameObject _debugNodeB;
-        [SerializeField] public GameObject _debugDistanceBetweenNodes;
+        [SerializeField, HideInInspector] public GameObject _debugNodeA;
+        [SerializeField, HideInInspector] public GameObject _debugNodeB;
+        [SerializeField, HideInInspector] public GameObject _debugDistanceBetweenNodes;
     }
 
     public enum ConnectionDirection
@@ -58,7 +58,7 @@ namespace MrSanmi.DijkstraAlgorithm
 
                 _origin = _internalData.nodeA.transform.position;
                 _directionAndMagnitude = _internalData.nodeB.transform.position - _origin;
-                Debug.DrawRay(_origin, _directionAndMagnitude, Color.blue);
+                //Debug.DrawRay(_origin, _directionAndMagnitude, Color.blue);
 
                 _internalData.distanceBetweenNodes = _directionAndMagnitude.magnitude;
                 transform.position = _origin + _directionAndMagnitude / 2.0f;
@@ -87,6 +87,24 @@ namespace MrSanmi.DijkstraAlgorithm
             Debug.LogError($" {this.name} {gameObject.name} - Node {value.name} is asking for a connection " +
                 $"not valid with {_internalData.nodeA.name} - {_internalData.nodeB.name}.", gameObject);
             return null;
+        }
+
+        public int OtherNodeID(Node value)
+        {
+            if (value == _internalData.nodeA || value == _internalData.nodeB)
+            {
+                if (value == _internalData.nodeA)
+                {
+                    return _internalData.nodeB.InstanceID;
+                }
+                else
+                {
+                    return _internalData.nodeA.InstanceID;
+                }
+            }
+            Debug.LogError($" {this.name} {gameObject.name} - Node {value.name} is asking for a connection " +
+                $"not valid with {_internalData.nodeA.name} - {_internalData.nodeB.name}.", gameObject);
+            return 0;
         }
 
         public bool ContainsNode(Node value)
