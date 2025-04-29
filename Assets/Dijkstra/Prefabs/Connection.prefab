@@ -109,6 +109,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dc0d1f4c33cc00d478d81e19b1a3801a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  connectionType: 0
   _internalData:
     nodeA: {fileID: 0}
     nodeB: {fileID: 0}

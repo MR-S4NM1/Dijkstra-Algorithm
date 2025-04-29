@@ -2,9 +2,8 @@ using System.Collections.Generic;
 using System.Collections;
 using System.Linq;
 using UnityEngine;
-using UnityEngine.Rendering;
 using Unity.VisualScripting;
-using TMPro;
+using UnityEditor;
 
 namespace MrSanmi.DijkstraAlgorithm
 {
@@ -29,6 +28,7 @@ namespace MrSanmi.DijkstraAlgorithm
         [SerializeField, HideInInspector] public Transform pivot;
         [SerializeField, HideInInspector] public List<Node> nodes;
         [SerializeField, HideInInspector] public GameObject nodePrefab;
+        [SerializeField, HideInInspector] public List<int> _totalNodesIDs;
 
         [Space]
         [SerializeField, HideInInspector] public GameObject connectionPrefab;
@@ -36,8 +36,7 @@ namespace MrSanmi.DijkstraAlgorithm
 
         [Space]
         [SerializeField, HideInInspector] public List<Route> allRoutesList;
-        [SerializeField, HideInInspector] public List<int> _totalNodesIDs;
-        [SerializeField, HideInInspector] public List<Route> usefulRoutesList; 
+        [SerializeField, HideInInspector] public List<Route> usefulRoutesList;
     }
 
     [System.Serializable]
@@ -46,6 +45,12 @@ namespace MrSanmi.DijkstraAlgorithm
         [SerializeField, HideInInspector] public float totalDistance;
         //[SerializeField, HideInInspector] public List<Node> nodesOfThisRoute;
         [SerializeField, HideInInspector] public List<int> nodesIDs;
+    }
+
+    [System.Serializable]
+    public struct FinalRoute
+    {
+        [SerializeField] public List<Vector3> _wayPoints;
     }
 
     public class Dijkstra : MonoBehaviour
@@ -59,6 +64,9 @@ namespace MrSanmi.DijkstraAlgorithm
 
         [Header("Node Instance")]
         [SerializeField, HideInInspector] public GameObject nodeInstance;
+
+        [Header("Final Route")]
+        [SerializeField] public FinalRoute _finalRoute;
         #endregion
 
         #region Knobs
@@ -80,14 +88,12 @@ namespace MrSanmi.DijkstraAlgorithm
         protected RaycastHit _currentHit;
         protected bool _containsNode;
         //protected Route actualRoute;
-
         protected float _nearestNodeDistance;
-
         protected float minDistance;
         protected int index;
+        //protected Route _actualRoute;
+        //protected Route _usefulRoute;
 
-        protected Route _actualRoute;
-        protected Route _usefulRoute;
 
         #endregion
 
@@ -172,6 +178,9 @@ namespace MrSanmi.DijkstraAlgorithm
 
             _internalData.allRoutesList.Clear();
             _internalData.usefulRoutesList.Clear();
+
+            if(_finalRoute._wayPoints != null) _finalRoute._wayPoints.Clear();
+
         }
 
         public void GenerateGraph()
@@ -513,15 +522,6 @@ namespace MrSanmi.DijkstraAlgorithm
                     return; //Recursitivity breaker
                 }
 
-                //Debug.Log($"Ahhhh - {p_node == null} - {p_node.gameObject.name}");
-
-                if (p_previousRoute.nodesIDs.Contains(p_nodeID))
-                {
-                    return; //Recursitivity breaker
-                }
-
-                //The node survived both conditions, so it is a candidate for a truncated route
-
                 Route actualRoute = new Route()
                 {
                     nodesIDs = new List<int>(p_previousRoute.nodesIDs),
@@ -536,7 +536,7 @@ namespace MrSanmi.DijkstraAlgorithm
                     if ((connection != null) && (connection.OtherNode(GetNode(p_nodeID)) != null))
                     {
                         RecursivitySearch(actualRoute, connection.OtherNodeID(GetNode(p_nodeID)),
-                            connection.DistanceBetweenNodes);
+                            connection.DistanceBetweenNodes); 
                     }
                 }
             }
@@ -589,6 +589,14 @@ namespace MrSanmi.DijkstraAlgorithm
             }
 
             Debug.Log($"The shortest distance is: {minDistance} - It has the index: {index}");
+
+            _finalRoute = new FinalRoute(){ _wayPoints = new List<Vector3>() };
+
+            for (int i = 0; i < _internalData.usefulRoutesList[index].nodesIDs.Count; i++){
+                _finalRoute._wayPoints.Add(GetNode(_internalData.usefulRoutesList[index].nodesIDs[i]).gameObject.transform.position);
+            }
+
+            _finalRoute._wayPoints.Add(_internalData.endPosition.position);
         }
 
         #endregion
@@ -597,22 +605,11 @@ namespace MrSanmi.DijkstraAlgorithm
 
         #endregion
 
-        #region GetNodeGO
+        #region GetNode
 
         public Node GetNode(int index)
         {
-            Node nodeInstance = null;
-
-            foreach (Node node in _internalData.nodes)
-            {
-                if (node.InstanceID == index)
-                {
-                    nodeInstance = node;
-                    break;
-                }
-            }
-
-            return nodeInstance;
+            return EditorUtility.InstanceIDToObject(index).GetComponent<Node>();
         }
 
         #endregion
