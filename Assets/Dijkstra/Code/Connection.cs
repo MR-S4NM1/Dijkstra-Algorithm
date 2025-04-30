@@ -58,7 +58,7 @@ namespace MrSanmi.DijkstraAlgorithm
 
                 _origin = _internalData.nodeA.transform.position;
                 _directionAndMagnitude = _internalData.nodeB.transform.position - _origin;
-                //Debug.DrawRay(_origin, _directionAndMagnitude, Color.blue);
+                Debug.DrawRay(_origin, _directionAndMagnitude, Color.blue);
 
                 _internalData.distanceBetweenNodes = _directionAndMagnitude.magnitude;
                 transform.position = _origin + _directionAndMagnitude / 2.0f;

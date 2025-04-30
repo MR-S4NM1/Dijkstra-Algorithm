@@ -40,6 +40,10 @@ namespace MrSanmi.DijkstraAlgorithm
             {
                 _dijkstra.LookForTheBestRoute();
             }
+            if(GUILayout.Button("Prepare Agent"))
+            {
+                _dijkstra.PrepareAgent();
+            }
         }
     }
 

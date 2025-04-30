@@ -2,8 +2,10 @@ using System.Collections.Generic;
 using System.Collections;
 using System.Linq;
 using UnityEngine;
-using Unity.VisualScripting;
 using UnityEditor;
+using Mr_Sanmi.AI_Agents;
+using UnityEditor.ShaderGraph.Internal;
+using static UnityEngine.InputSystem.OnScreen.OnScreenStick;
 
 namespace MrSanmi.DijkstraAlgorithm
 {
@@ -28,7 +30,7 @@ namespace MrSanmi.DijkstraAlgorithm
         [SerializeField, HideInInspector] public Transform pivot;
         [SerializeField, HideInInspector] public List<Node> nodes;
         [SerializeField, HideInInspector] public GameObject nodePrefab;
-        [SerializeField, HideInInspector] public List<int> _totalNodesIDs;
+        [SerializeField, HideInInspector] public List<int> totalNodesIDs;
 
         [Space]
         [SerializeField, HideInInspector] public GameObject connectionPrefab;
@@ -45,6 +47,17 @@ namespace MrSanmi.DijkstraAlgorithm
         [SerializeField, HideInInspector] public float totalDistance;
         //[SerializeField, HideInInspector] public List<Node> nodesOfThisRoute;
         [SerializeField, HideInInspector] public List<int> nodesIDs;
+    }
+
+    [System.Serializable]
+    public struct AgentData
+    {
+        [SerializeField] public GameObject agentPrefab;
+        [SerializeField] public AIAgent_SO agentSO;
+        [SerializeField] public List<Vector3> destinyPositions;
+        [SerializeField] public float agentSpeed;
+        [SerializeField] public Transform agentInitialPos;
+        [SerializeField] public Transform agentFinalPos;
     }
 
     [System.Serializable]
@@ -67,6 +80,9 @@ namespace MrSanmi.DijkstraAlgorithm
 
         [Header("Final Route")]
         [SerializeField] public FinalRoute _finalRoute;
+
+        [Header("Agent Data")]
+        [SerializeField] protected AgentData _agentData;
         #endregion
 
         #region Knobs
@@ -118,7 +134,7 @@ namespace MrSanmi.DijkstraAlgorithm
                     nodeInstance = Instantiate(_internalData.nodePrefab);
                     actualNode = nodeInstance.GetComponent<Node>();
                     _internalData.nodes.Add(actualNode);
-                    _internalData._totalNodesIDs.Add(actualNode.InstanceID);
+                    _internalData.totalNodesIDs.Add(actualNode.InstanceID);
                     nodeInstance.transform.position = tempPos;
 
                     if (i == 0 && j == 0)
@@ -162,13 +178,10 @@ namespace MrSanmi.DijkstraAlgorithm
         {
             foreach (Node node in transform.GetChild(0).GetComponentsInChildren<Node>())
             {
-                //if (!node.gameObject.CompareTag("FinalNode"))
-                //{
-                    DestroyImmediate(node.gameObject);
-                //}
+                DestroyImmediate(node.gameObject);
             }
             _internalData.nodes.Clear();
-            _internalData._totalNodesIDs.Clear();
+            _internalData.totalNodesIDs.Clear();
 
             foreach (Connection connection in transform.GetChild(1).GetComponentsInChildren<Connection>())
             {
@@ -181,6 +194,12 @@ namespace MrSanmi.DijkstraAlgorithm
 
             if(_finalRoute._wayPoints != null) _finalRoute._wayPoints.Clear();
 
+            //Agent Data
+            _agentData.destinyPositions.Clear();
+            _agentData.agentPrefab = null;
+            _agentData.agentSO.movingBehaviours.Clear();
+            _agentData.agentSO.spawnParameters.rotation = Vector3.zero;
+            _agentData.agentSO.spawnParameters.position = Vector3.zero;
         }
 
         public void GenerateGraph()
@@ -505,39 +524,38 @@ namespace MrSanmi.DijkstraAlgorithm
             #endregion
 
             #region SecondSolution
-            if (!p_previousRoute.nodesIDs.Contains(p_nodeID))
+            if (p_nodeID == _internalData.endNode.InstanceID)
             {
-                if (p_nodeID == _internalData.endNode.InstanceID)
+                Route usefulRoute = new Route()
                 {
-                    Route usefulRoute = new Route()
-                    {
-                        //nodesOfThisRoute = new List<Node>(p_previousRoute.nodesOfThisRoute),
-                        nodesIDs = new List<int>(p_previousRoute.nodesIDs),
-                        totalDistance = (p_previousRoute.totalDistance + distance)
-                    };
-                    usefulRoute.nodesIDs.Add(_internalData.endNode.InstanceID);
-
-                    _internalData.allRoutesList.Add(usefulRoute);
-                    _internalData.usefulRoutesList.Add(usefulRoute);
-                    return; //Recursitivity breaker
-                }
-
-                Route actualRoute = new Route()
-                {
+                    //nodesOfThisRoute = new List<Node>(p_previousRoute.nodesOfThisRoute),
                     nodesIDs = new List<int>(p_previousRoute.nodesIDs),
-                    totalDistance = p_previousRoute.totalDistance + distance
+                    totalDistance = (p_previousRoute.totalDistance + distance)
                 };
+                usefulRoute.nodesIDs.Add(_internalData.endNode.InstanceID);
 
-                actualRoute.nodesIDs.Add(p_nodeID);
-                _internalData.allRoutesList.Add(actualRoute);
+                _internalData.allRoutesList.Add(usefulRoute);
+                _internalData.usefulRoutesList.Add(usefulRoute);
+                return; //Recursitivity breaker
+            }
 
-                foreach (Connection connection in GetNode(p_nodeID).Connections)
+            if (p_previousRoute.nodesIDs.Contains(p_nodeID)) return;
+
+            Route actualRoute = new Route()
+            {
+                nodesIDs = new List<int>(p_previousRoute.nodesIDs),
+                totalDistance = p_previousRoute.totalDistance + distance
+            };
+
+            actualRoute.nodesIDs.Add(p_nodeID);
+            _internalData.allRoutesList.Add(actualRoute);
+
+            foreach (Connection connection in GetNode(p_nodeID).Connections)
+            {
+                if ((connection != null) && (connection.OtherNode(GetNode(p_nodeID)) != null))
                 {
-                    if ((connection != null) && (connection.OtherNode(GetNode(p_nodeID)) != null))
-                    {
-                        RecursivitySearch(actualRoute, connection.OtherNodeID(GetNode(p_nodeID)),
-                            connection.DistanceBetweenNodes); 
-                    }
+                    RecursivitySearch(actualRoute, connection.OtherNodeID(GetNode(p_nodeID)),
+                        connection.DistanceBetweenNodes); 
                 }
             }
             #endregion
@@ -599,19 +617,63 @@ namespace MrSanmi.DijkstraAlgorithm
             _finalRoute._wayPoints.Add(_internalData.endPosition.position);
         }
 
+        public void PrepareAgent()
+        {
+            _agentData.agentPrefab = GameObject.FindWithTag("Agent");
+            _agentData.agentInitialPos = GameObject.FindWithTag("InitialPosition").transform;
+
+            AgentData agentData = new AgentData()
+            {
+                agentInitialPos = _agentData.agentInitialPos,
+                agentPrefab = _agentData.agentPrefab,
+                agentSO = _agentData.agentSO,
+                destinyPositions = new List<Vector3>(_finalRoute._wayPoints)
+            };
+
+            _agentData.agentSO.spawnParameters.position = _agentData.agentInitialPos.position;
+            _agentData.agentSO.spawnParameters.rotation = _agentData.agentInitialPos.eulerAngles;
+
+            _agentData.agentInitialPos.position = _agentData.agentSO.spawnParameters.position;
+            _agentData.agentPrefab.transform.eulerAngles = _agentData.agentSO.spawnParameters.rotation;
+
+            _agentData.agentPrefab.transform.position = _agentData.agentInitialPos.position;
+
+
+            for (int i = 0; i < agentData.destinyPositions.Count; ++i)
+            {
+                MovingBehaviours behaviour = new MovingBehaviours()
+                {
+                    stateMechanic = StateMechanics.MOVE,
+                    destinyDirection = agentData.destinyPositions[i],
+                    movSpeed = _agentData.agentSpeed,
+                };
+                agentData.agentSO.movingBehaviours.Add(behaviour);
+            }
+
+            MovingBehaviours finalBehaviour = new MovingBehaviours()
+            {
+                stateMechanic = StateMechanics.STOP,
+                destinyDirection = agentData.agentPrefab.transform.position,
+                movSpeed = 0.0f
+            };
+
+            agentData.agentSO.movingBehaviours.Add(finalBehaviour);
+
+            _agentData = agentData;
+        }
+
         #endregion
 
         #region LocalMethods
 
         #endregion
 
-        #region GetNode
+        #region GettersAndSetters
 
         public Node GetNode(int index)
         {
-            return EditorUtility.InstanceIDToObject(index).GetComponent<Node>();
+            return ((GameObject)EditorUtility.InstanceIDToObject(index)).GetComponent<Node>();
         }
-
         #endregion
     }
 }
