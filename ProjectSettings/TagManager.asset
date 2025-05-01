@@ -9,6 +9,7 @@ TagManager:
   - InitialNode
   - Agent
   - InitialPosition
+  - FinalPosition
   layers:
   - Default
   - TransparentFX

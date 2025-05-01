@@ -621,10 +621,12 @@ namespace MrSanmi.DijkstraAlgorithm
         {
             _agentData.agentPrefab = GameObject.FindWithTag("Agent");
             _agentData.agentInitialPos = GameObject.FindWithTag("InitialPosition").transform;
+            _agentData.agentFinalPos = GameObject.FindWithTag("FinalPosition").transform;
 
             AgentData agentData = new AgentData()
             {
                 agentInitialPos = _agentData.agentInitialPos,
+                agentFinalPos = _agentData.agentFinalPos,
                 agentPrefab = _agentData.agentPrefab,
                 agentSO = _agentData.agentSO,
                 destinyPositions = new List<Vector3>(_finalRoute._wayPoints)
@@ -634,7 +636,7 @@ namespace MrSanmi.DijkstraAlgorithm
             _agentData.agentSO.spawnParameters.rotation = _agentData.agentInitialPos.eulerAngles;
 
             _agentData.agentInitialPos.position = _agentData.agentSO.spawnParameters.position;
-            _agentData.agentPrefab.transform.eulerAngles = _agentData.agentSO.spawnParameters.rotation;
+            _agentData.agentPrefab.transform.eulerAngles = _agentData.agentSO.spawnParameters.rotation; 
 
             _agentData.agentPrefab.transform.position = _agentData.agentInitialPos.position;
 
