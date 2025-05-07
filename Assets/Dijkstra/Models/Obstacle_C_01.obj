@@ -1,0 +1,51 @@
+# ProBuilder 5.2.4
+# https://unity3d.com/unity/features/worldbuilding/probuilder
+# 5/6/2025 8:05:45 PM
+
+mtllib ./Obstacle_C_01.mtl
+o Obstacle_C_01
+
+g Obstacle_C_01
+v 30 0 26.5
+v 23.5 0 26.5
+v 30 2 26.5
+v 23.5 2 26.5
+v 23.5 0 25.5
+v 23.5 2 25.5
+v 30 0 25.5
+v 30 2 25.5
+
+vt 12.5 0
+vt 6 0
+vt 12.5 2
+vt 6 2
+vt 1 0
+vt 0 0
+vt 1 2
+vt 0 2
+vt -6 0
+vt -12.5 0
+vt -6 2
+vt -12.5 2
+vt -1 0
+vt -1 2
+vt -12.5 1
+vt -6 1
+vt 12.5 1
+vt 6 1
+
+vn 0 0 1
+vn -1 0 0
+vn 0 0 -1
+vn 1 0 0
+vn 0 1 0
+vn 0 -1 0
+
+usemtl GrayGreyboxing
+f 3/3/1 4/4/1 2/2/1 1/1/1
+f 4/7/2 6/8/2 5/6/2 2/5/2
+f 6/11/3 8/12/3 7/10/3 5/9/3
+f 8/8/4 3/14/4 1/13/4 7/6/4
+f 8/10/5 6/9/5 4/16/5 3/15/5
+f 1/17/6 2/18/6 5/2/6 7/1/6
+

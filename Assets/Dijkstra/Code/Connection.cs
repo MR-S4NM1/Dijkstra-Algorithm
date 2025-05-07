@@ -64,7 +64,7 @@ namespace MrSanmi.DijkstraAlgorithm
                 transform.position = _origin + _directionAndMagnitude / 2.0f;
 
                 _debug._debugDistanceBetweenNodes.name = $"D: {_internalData.distanceBetweenNodes}";
-                _debug._debugNodeA.name = $"NA: {_internalData.nodeA.name}";
+                _debug._debugNodeA.name = $"NA: {_internalData.nodeA.name}"; 
                 _debug._debugNodeB.name = $"NB: {_internalData.nodeB.name}";
             }
         }

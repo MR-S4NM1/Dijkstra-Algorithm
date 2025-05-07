@@ -19,34 +19,35 @@ namespace MrSanmi.DijkstraAlgorithm
     [System.Serializable]
     public struct DijkstraInternalData
     {
-        [SerializeField, HideInInspector] public Transform startPosition;
-        [SerializeField, HideInInspector] public Node startNode;
+        [SerializeField] public Transform startPosition;
+        [SerializeField] public Node startNode;
 
         [Space]
-        [SerializeField, HideInInspector] public Transform endPosition;
-        [SerializeField, HideInInspector] public Node endNode;
+        [SerializeField] public Transform endPosition;
+        [SerializeField] public Node endNode;
 
         [Space]
-        [SerializeField, HideInInspector] public Transform pivot;
-        [SerializeField, HideInInspector] public List<Node> nodes;
-        [SerializeField, HideInInspector] public GameObject nodePrefab;
-        [SerializeField, HideInInspector] public List<int> totalNodesIDs;
+        [SerializeField] public Transform pivot;
+        [SerializeField] public Transform layoutPivot;
+        [SerializeField] public List<Node> nodes;
+        [SerializeField] public GameObject nodePrefab;
+        [SerializeField] public List<int> totalNodesIDs;
 
         [Space]
-        [SerializeField, HideInInspector] public GameObject connectionPrefab;
-        [SerializeField, HideInInspector] public List<Connection> connections;
+        [SerializeField] public GameObject connectionPrefab;
+        [SerializeField] public List<Connection> connections;
 
         [Space]
-        [SerializeField, HideInInspector] public List<Route> allRoutesList;
-        [SerializeField, HideInInspector] public List<Route> usefulRoutesList;
+        [SerializeField] public List<Route> allRoutesList;
+        [SerializeField] public List<Route> usefulRoutesList;
     }
 
     [System.Serializable]
     public struct Route
     {
-        [SerializeField, HideInInspector] public float totalDistance;
+        [SerializeField] public float totalDistance;
         //[SerializeField, HideInInspector] public List<Node> nodesOfThisRoute;
-        [SerializeField, HideInInspector] public List<int> nodesIDs;
+        [SerializeField] public List<int> nodesIDs;
     }
 
     [System.Serializable]
@@ -63,7 +64,7 @@ namespace MrSanmi.DijkstraAlgorithm
     [System.Serializable]
     public struct FinalRoute
     {
-        [SerializeField] public List<Vector3> _wayPoints;
+        [SerializeField] public List<Vector3> _wayPoints; 
     }
 
     public class Dijkstra : MonoBehaviour
@@ -109,6 +110,7 @@ namespace MrSanmi.DijkstraAlgorithm
         protected int index;
         //protected Route _actualRoute;
         //protected Route _usefulRoute;
+        protected float _nearestStartNode;
 
 
         #endregion
@@ -123,7 +125,7 @@ namespace MrSanmi.DijkstraAlgorithm
         {
             ClearAll();
 
-            Vector3 tempPos = _internalData.startPosition.position;
+            Vector3 tempPos = _internalData.layoutPivot.position;
             _xOffset = (float)_parameters.nodesMatrixSize.x / ((float)_parameters.numberOfNodes.x - 1.0f);
             _yOffset = (float)_parameters.nodesMatrixSize.y / ((float)_parameters.numberOfNodes.y - 1.0f);
 
@@ -137,10 +139,9 @@ namespace MrSanmi.DijkstraAlgorithm
                     _internalData.totalNodesIDs.Add(actualNode.InstanceID);
                     nodeInstance.transform.position = tempPos;
 
-                    if (i == 0 && j == 0)
+                    if(i == 0 && j == 0)
                     {
                         _internalData.startNode = actualNode;
-                        actualNode.gameObject.tag = "InitialNode";
                     }
 
                     Collider[] hitColliders = Physics.OverlapSphere(actualNode.transform.position, 0.5f);
@@ -172,6 +173,21 @@ namespace MrSanmi.DijkstraAlgorithm
 
             //_internalData.nodes.Add(_internalData.endNode);
             actualNode = null;
+
+            _nearestStartNode = Mathf.Infinity;
+
+            foreach (Node node in _internalData.nodes)
+            {
+                if (node.nodeState == NodeStates.HABILITADO)
+                {
+                    if (Vector3.Distance(node.gameObject.transform.position, _internalData.pivot.position) < _nearestStartNode)
+                    {
+                        _nearestStartNode = Vector3.Distance(node.gameObject.transform.position, _internalData.pivot.position);
+                        _internalData.startNode = node;
+                        _internalData.startNode.gameObject.tag = "InitialNode";
+                    }
+                }
+            }
         }
 
         public void ClearAll()
@@ -587,8 +603,8 @@ namespace MrSanmi.DijkstraAlgorithm
                     //RecursivitySearch(initialRoute, connection.OtherNode(_internalData.startNode), 0f);
                 }
 
-                Debug.Log($"Number of Routes: { _internalData.allRoutesList.Count }");
-                Debug.Log($"Number of Useful Routes: {_internalData.usefulRoutesList.Count}");
+                //Debug.Log($"Number of Routes: { _internalData.allRoutesList.Count }");
+                //Debug.Log($"Number of Useful Routes: {_internalData.usefulRoutesList.Count}");
             }
         }
 
@@ -606,7 +622,7 @@ namespace MrSanmi.DijkstraAlgorithm
                 }
             }
 
-            Debug.Log($"The shortest distance is: {minDistance} - It has the index: {index}");
+            //Debug.Log($"The shortest distance is: {minDistance} - It has the index: {index}");
 
             _finalRoute = new FinalRoute(){ _wayPoints = new List<Vector3>() };
 
